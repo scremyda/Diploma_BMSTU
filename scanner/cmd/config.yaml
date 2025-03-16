@@ -1,0 +1,14 @@
+scraper:
+  - target: "https://example.com/api/v1"
+    interval: 30s
+    alert_interval: 5m
+    override_cn: "custom-cn.example.com"
+
+  - target: "https://another-example.com/metrics"
+    interval: 1m
+    alert_interval: 10m
+    override_cn: ""
+
+scraper_internal:
+  pool_size: 10
+  min_scrape_interval: 10s
