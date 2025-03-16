@@ -1,10 +1,10 @@
 scraper:
-  - target: "https://example.com/api/v1"
-    interval: 30s
+  - target: "https://vk.com"
+    interval: 3s
     alert_interval: 5m
-    override_cn: "custom-cn.example.com"
+    override_cn: ""
 
-  - target: "https://another-example.com/metrics"
+  - target: "https://ya.ru"
     interval: 1m
     alert_interval: 10m
     override_cn: ""

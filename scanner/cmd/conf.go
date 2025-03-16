@@ -3,12 +3,19 @@ package main
 import (
 	"diploma/scanner/scraper"
 	"gopkg.in/yaml.v3"
+	"log"
 	"os"
+	"time"
 )
 
 type Config struct {
-	Scraper             []scraper.Conf       `yaml:"scraper"`
-	ScraperInternalConf scraper.InternalConf `yaml:"scraper_internal"`
+	Scraper             []scraper.Conf `yaml:"scraper"`
+	ScraperInternalConf InternalConf   `yaml:"scraper_internal"`
+}
+
+type InternalConf struct {
+	PoolSize          int           `yaml:"pool_size"`
+	MinScrapeInterval time.Duration `yaml:"min_scrape_interval"`
 }
 
 func ReadConf(cfgPath string) (*Config, error) {
@@ -23,4 +30,14 @@ func ReadConf(cfgPath string) (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+func (conf *Config) AdjustScrapeIntervals() {
+	for i, cfg := range conf.Scraper {
+		if cfg.Interval < conf.ScraperInternalConf.MinScrapeInterval {
+			log.Printf("Interval %s for %s is less than min_scrape_interval (%s); setting to min_scrape_interval",
+				cfg.Interval, cfg.Target, conf.ScraperInternalConf.MinScrapeInterval)
+			conf.Scraper[i].Interval = conf.ScraperInternalConf.MinScrapeInterval
+		}
+	}
 }

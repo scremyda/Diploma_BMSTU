@@ -19,11 +19,6 @@ type Conf struct {
 type Scraper struct {
 }
 
-type InternalConf struct {
-	PoolSize          int           `yaml:"pool_size"`
-	MinScrapeInterval time.Duration `yaml:"min_scrape_interval"`
-}
-
 type Result struct {
 	Target    string
 	ExpiresIn time.Duration
@@ -31,9 +26,8 @@ type Result struct {
 	Errors    error
 }
 
-func NewScraper() (*Scraper, error) {
-
-	return &Scraper{}, nil
+func NewScraper() *Scraper {
+	return &Scraper{}
 }
 
 func (r *Scraper) Scrape(ctx context.Context, targetURL string) Result {
