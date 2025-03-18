@@ -1,16 +1,23 @@
 package main
 
 import (
+	"diploma/scanner/analyzer"
+	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Scraper             []scraper.Conf `yaml:"scraper"`
-	ScraperInternalConf InternalConf   `yaml:"scraper_internal"`
+	External []struct {
+		ScraperConf   scraper.Conf
+		AnalyzerConf  analyzer.Conf
+		SchedulerConf scheduler.Conf
+	} `yaml:"external"`
+	Internal InternalConf `yaml:"internal"`
 }
 
 type InternalConf struct {
@@ -33,11 +40,12 @@ func ReadConf(cfgPath string) (*Config, error) {
 }
 
 func (conf *Config) AdjustScrapeIntervals() {
-	for i, cfg := range conf.Scraper {
-		if cfg.Interval < conf.ScraperInternalConf.MinScrapeInterval {
+	for i, cfg := range conf.External {
+		if cfg.SchedulerConf.Interval < conf.Internal.MinScrapeInterval {
 			log.Printf("Interval %s for %s is less than min_scrape_interval (%s); setting to min_scrape_interval",
-				cfg.Interval, cfg.Target, conf.ScraperInternalConf.MinScrapeInterval)
-			conf.Scraper[i].Interval = conf.ScraperInternalConf.MinScrapeInterval
+				cfg.SchedulerConf.Interval, cfg.ScraperConf.Target, conf.Internal.MinScrapeInterval)
+
+			conf.External[i].SchedulerConf.Interval = conf.Internal.MinScrapeInterval
 		}
 	}
 }

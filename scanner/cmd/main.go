@@ -4,14 +4,13 @@ import (
 	"context"
 	"diploma/scanner/analyzer"
 	"diploma/scanner/saver"
-	"diploma/scanner/scanner"
+	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -33,34 +32,28 @@ func main() {
 		cancel()
 	}()
 
-	workerSem := make(chan struct{}, conf.ScraperInternalConf.PoolSize)
+	saver := saver.NewSaver()
 
 	var wg sync.WaitGroup
-
-	sc := scraper.NewScraper()
-	an := analyzer.NewAnalyzer()
-	sv := saver.NewSaver()
-
-	for _, cfg := range conf.Scraper {
+	semaphore := make(chan struct{}, conf.Internal.PoolSize)
+	for _, cfg := range conf.External {
 		wg.Add(1)
-		go func(conf scraper.Conf) {
-			defer wg.Done()
 
-			ticker := time.NewTicker(conf.Interval)
-			defer ticker.Stop()
+		scraper := scraper.NewScraper(cfg.ScraperConf)
+		analyzer := analyzer.NewAnalyzer(cfg.AnalyzerConf)
 
-			scanner.Scan(ctx, sc, an, sv, conf, workerSem)
+		scheduler := scheduler.NewScheduler(
+			cfg.SchedulerConf,
+			scraper,
+			analyzer,
+			saver,
+		)
 
-			for {
-				select {
-				case <-ctx.Done():
-					log.Printf("Context cancelled, stopping scanning for %s", conf.Target)
-					return
-				case <-ticker.C:
-					scanner.Scan(ctx, sc, an, sv, conf, workerSem)
-				}
-			}
-		}(cfg)
+		go scheduler.Schedule(
+			ctx,
+			semaphore,
+			&wg,
+		)
 	}
 
 	wg.Wait()

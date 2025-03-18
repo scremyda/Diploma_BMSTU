@@ -3,80 +3,78 @@ package scraper
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
+	"strings"
 	"time"
 )
 
 type Conf struct {
-	Target        string        `yaml:"target"`
-	Interval      time.Duration `yaml:"interval"`
-	AlertInterval time.Duration `yaml:"alert_interval"`
-	OverrideCN    string        `yaml:"override_cn"`
+	Target  string        `yaml:"target"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 type Scraper struct {
+	conf Conf
 }
 
-type Result struct {
+type Scrape struct {
 	Target    string
 	ExpiresIn time.Duration
 	CN        string
-	Errors    error
 }
 
-func NewScraper() *Scraper {
-	return &Scraper{}
+func NewScraper(cfg Conf) *Scraper {
+	return &Scraper{
+		conf: cfg,
+	}
 }
 
-func (r *Scraper) Scrape(ctx context.Context, targetURL string) Result {
-	result := Result{Target: targetURL}
-	u, err := url.Parse(targetURL)
+func (r *Scraper) Scrape(ctx context.Context) (Scrape, error) {
+	u, err := url.Parse(r.conf.Target)
 	if err != nil {
-		result.Errors = fmt.Errorf("invalid URL: %w", err)
-
-		return result
+		return Scrape{}, fmt.Errorf("invalid URL: %w", err)
 	}
 
 	host := u.Hostname()
-	if host == "" {
-		result.Errors = fmt.Errorf("empty host in target")
-
-		return result
+	if len(host) == 0 {
+		return Scrape{}, errors.New("empty host in target")
 	}
 
+	var addr strings.Builder
+	addr.WriteString(host)
+
 	port := u.Port()
-	if port == "" {
-		port = "443"
+	if len(port) != 0 {
+		addr.WriteString(":")
+		addr.WriteString(port)
 	}
 
 	conn, err := tls.DialWithDialer(
 		&net.Dialer{
-			Timeout: 10 * time.Second,
+			Timeout: r.conf.Timeout,
 		},
 		"tcp",
-		host+":"+port,
+		addr.String(),
 		&tls.Config{
 			InsecureSkipVerify: true,
 		},
 	)
 	if err != nil {
-		result.Errors = fmt.Errorf("connection failed: %w", err)
-
-		return result
+		return Scrape{}, fmt.Errorf("connection failed: %w", err)
 	}
 	defer conn.Close()
 
 	if len(conn.ConnectionState().PeerCertificates) == 0 {
-		result.Errors = fmt.Errorf("no peer certificates found")
-
-		return result
+		return Scrape{}, errors.New("no peer certificates found")
 	}
+	cert := conn.ConnectionState().PeerCertificates[0] //Need to check wildard, subject alternative name, ip
 
-	cert := conn.ConnectionState().PeerCertificates[0]
-	result.CN = cert.Subject.CommonName
-	result.ExpiresIn = time.Until(cert.NotAfter)
-
-	return result
+	return Scrape{
+		Target:    addr.String(),
+		CN:        cert.Subject.CommonName,
+		ExpiresIn: time.Until(cert.NotAfter),
+	}, nil
 }

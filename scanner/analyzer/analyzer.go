@@ -5,47 +5,48 @@ import (
 	"diploma/scanner/scraper"
 	"fmt"
 	"net/url"
+	"time"
 )
 
+type Conf struct {
+	AlertInterval time.Duration `yaml:"alert_interval"`
+	OverrideCN    string        `yaml:"override_cn"`
+}
+
 type Analyzer struct {
+	conf Conf
 }
 
-func NewAnalyzer() *Analyzer {
-	return &Analyzer{}
+func NewAnalyzer(cfg Conf) *Analyzer {
+	return &Analyzer{
+		conf: cfg,
+	}
 }
 
-func (a *Analyzer) Analyze(ctx context.Context, conf scraper.Conf, result scraper.Result) []string {
-	var warnings []string
+func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
+	if scrape.ExpiresIn < a.conf.AlertInterval {
+		return fmt.Errorf("Certificate for %s expires in %s (alert threshold: %s)",
+			scrape.Target, scrape.ExpiresIn, a.conf.AlertInterval)
 
-	if result.Errors != nil {
-		warnings = append(warnings, fmt.Sprintf("Error for %s: %v", result.Target, result.Errors))
-		return warnings
 	}
 
-	if result.ExpiresIn < conf.AlertInterval {
-		warnings = append(warnings, fmt.Sprintf("Certificate for %s expires in %s (alert threshold: %s)",
-			result.Target, result.ExpiresIn, conf.AlertInterval))
-	}
-
-	parsedURL, err := url.Parse(conf.Target)
+	parsedURL, err := url.Parse(scrape.Target)
 	if err != nil {
-		warnings = append(warnings, fmt.Sprintf("Invalid URL %s: %v", conf.Target, err))
-		return warnings
+		return fmt.Errorf("Invalid URL %s: %v", scrape.Target, err)
 	}
 
-	expectedCN := result.CN
-	if conf.OverrideCN != "" {
-		expectedCN = conf.OverrideCN
+	expectedCN := scrape.CN
+	if a.conf.OverrideCN != "" {
+		expectedCN = a.conf.OverrideCN
 	}
 
 	expectedHost := parsedURL.Hostname()
-
 	if !matchesDomain(expectedCN, expectedHost) {
-		warnings = append(warnings, fmt.Sprintf("Certificate for %s has unexpected CN: got %s, expected %s",
-			conf.Target, result.CN, expectedHost))
+		err = fmt.Errorf("Certificate for %s has unexpected CN: got %s, expected %s",
+			scrape.Target, scrape.CN, expectedHost)
 	}
 
-	return warnings
+	return err
 }
 
 func matchesDomain(pattern, host string) bool {

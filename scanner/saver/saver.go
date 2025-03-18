@@ -9,8 +9,6 @@ func NewSaver() *Saver {
 	return &Saver{}
 }
 
-func (s *Saver) Save(warnings []string) {
-	for _, w := range warnings {
-		fmt.Println("[WARNING]", w)
-	}
+func (s *Saver) Save(err error) {
+	fmt.Println("[WARNING]", err)
 }
