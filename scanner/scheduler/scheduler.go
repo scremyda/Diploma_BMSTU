@@ -6,8 +6,13 @@ import (
 	"diploma/scanner/saver"
 	"diploma/scanner/scraper"
 	"log"
+	"math/rand/v2"
 	"sync"
 	"time"
+)
+
+const (
+	rangeFactor = 0.1
 )
 
 type Conf struct {
@@ -42,7 +47,7 @@ func (s *Scheduler) Schedule(
 ) error {
 	defer wg.Done()
 
-	ticker := time.NewTicker(s.conf.Interval)
+	ticker := time.NewTicker(randomizeInterval(s.conf.Interval))
 	defer ticker.Stop()
 
 	Scan(ctx, s.scraper, s.analyzer, s.saver, semaphore)
@@ -78,4 +83,15 @@ func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *s
 			log.Printf("Certificate for %s is OK: expires in %s, CN = %s", scrapeInfo.Target, scrapeInfo.ExpiresIn, scrapeInfo.CN)
 		}
 	}()
+}
+
+func randomizeInterval(base time.Duration) time.Duration {
+	if base <= 0 {
+		return base
+	}
+
+	band := float64(base) * rangeFactor
+	offset := rand.Float64()*2*band - band // [-band, +band)
+
+	return base + time.Duration(offset)
 }
