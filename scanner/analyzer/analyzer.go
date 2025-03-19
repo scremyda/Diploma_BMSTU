@@ -25,14 +25,14 @@ func NewAnalyzer(cfg Conf) *Analyzer {
 
 func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 	if scrape.ExpiresIn < a.conf.AlertInterval {
-		return fmt.Errorf("Certificate for %s expires in %s (alert threshold: %s)",
+		return fmt.Errorf("certificate for %s expires in %s (alert threshold: %s)",
 			scrape.Target, scrape.ExpiresIn, a.conf.AlertInterval)
 
 	}
 
 	parsedURL, err := url.Parse(scrape.Target)
 	if err != nil {
-		return fmt.Errorf("Invalid URL %s: %v", scrape.Target, err)
+		return fmt.Errorf("invalid URL %s: %v", scrape.Target, err)
 	}
 
 	expectedCN := scrape.CN
