@@ -1,14 +1,22 @@
-scraper:
-  - target: "https://vk.com"
-    interval: 3s
-    alert_interval: 5m
-    override_cn: ""
+external:
+  - scraper_conf:
+      target: "https://vk.com"
+      timeout: 3s
+    analyzer_conf:
+      alert_interval: 5m
+      override_cn: ""
+    scheduler_conf:
+      timeout: 3s
 
-  - target: "https://ya.ru"
-    interval: 1m
-    alert_interval: 10m
-    override_cn: ""
+  - scraper_conf:
+      target: "https://ya.ru"
+      timeout: 1m
+    analyzer_conf:
+      alert_interval: 10m
+      override_cn: ""
+    scheduler_conf:
+      timeout: 1m
 
-scraper_internal:
+internal:
   pool_size: 10
   min_scrape_interval: 10s
