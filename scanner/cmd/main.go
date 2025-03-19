@@ -6,11 +6,17 @@ import (
 	"diploma/scanner/saver"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
+	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+)
+
+const (
+	databaseConnectionStr string = "postgres://%v:%v@%v:%v/%v?sslmode=disable"
 )
 
 func main() {
@@ -19,7 +25,7 @@ func main() {
 		log.Fatal("Error reading config: ", err)
 	}
 
-	conf.AdjustScrapeIntervals()
+	conf.Validate()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -32,7 +38,28 @@ func main() {
 		cancel()
 	}()
 
-	saver := saver.NewSaver()
+	db, err := pgxpool.Connect(
+		ctx,
+		fmt.Sprintf(databaseConnectionStr,
+			conf.Database.DBUser,
+			conf.Database.DBPass,
+			conf.Database.DBHost,
+			conf.Database.DBPort,
+			conf.Database.DBName,
+		),
+	)
+	if err != nil {
+		log.Println("failed to open postgres", err)
+		return
+	}
+	defer db.Close()
+
+	if err = db.Ping(ctx); err != nil {
+		log.Println("failed to ping postgres", err)
+		return
+	}
+
+	saver := saver.NewSaver(db)
 
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, conf.Internal.PoolSize)
