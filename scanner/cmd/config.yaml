@@ -1,6 +1,6 @@
 external:
   - scraper_conf:
-      target: "https://vk.com"
+      target: "https://vk.com:443"
       timeout: 3s
     analyzer_conf:
       alert_interval: 5m
@@ -9,7 +9,7 @@ external:
       timeout: 3s
 
   - scraper_conf:
-      target: "https://ya.ru"
+      target: "https://ya.ru:443"
       timeout: 1m
     analyzer_conf:
       alert_interval: 10m

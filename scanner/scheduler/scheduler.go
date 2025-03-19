@@ -11,12 +11,9 @@ import (
 	"time"
 )
 
-const (
-	rangeFactor = 0.1
-)
-
 type Conf struct {
-	Interval time.Duration `yaml:"timeout"`
+	Interval    time.Duration `yaml:"timeout"`
+	RangeFactor float64       `yaml:"range_factor"`
 }
 
 type Scheduler struct {
@@ -47,7 +44,7 @@ func (s *Scheduler) Schedule(
 ) error {
 	defer wg.Done()
 
-	ticker := time.NewTicker(randomizeInterval(s.conf.Interval))
+	ticker := time.NewTicker(s.randomizeInterval())
 	defer ticker.Stop()
 
 	Scan(ctx, s.scraper, s.analyzer, s.saver, semaphore)
@@ -85,13 +82,13 @@ func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *s
 	}()
 }
 
-func randomizeInterval(base time.Duration) time.Duration {
-	if base <= 0 {
-		return base
+func (s *Scheduler) randomizeInterval() time.Duration {
+	if s.conf.Interval <= 0 {
+		return s.conf.Interval
 	}
 
-	band := float64(base) * rangeFactor
+	band := float64(s.conf.Interval) * s.conf.RangeFactor
 	offset := rand.Float64()*2*band - band // [-band, +band)
 
-	return base + time.Duration(offset)
+	return s.conf.Interval + time.Duration(offset)
 }

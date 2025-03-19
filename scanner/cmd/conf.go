@@ -11,11 +11,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	defaultRangeFactor float64 = 0.1
+)
+
 type Config struct {
 	External []struct {
-		ScraperConf   scraper.Conf
-		AnalyzerConf  analyzer.Conf
-		SchedulerConf scheduler.Conf
+		ScraperConf   scraper.Conf   `yaml:"scraper_conf"`
+		AnalyzerConf  analyzer.Conf  `yaml:"analyzer_conf"`
+		SchedulerConf scheduler.Conf `yaml:"scheduler_conf"`
 	} `yaml:"external"`
 	Internal InternalConf `yaml:"internal"`
 }
@@ -46,6 +50,13 @@ func (conf *Config) AdjustScrapeIntervals() {
 				cfg.SchedulerConf.Interval, cfg.ScraperConf.Target, conf.Internal.MinScrapeInterval)
 
 			conf.External[i].SchedulerConf.Interval = conf.Internal.MinScrapeInterval
+		}
+
+		if cfg.SchedulerConf.RangeFactor <= 0 {
+			log.Printf("RangeFactor %f for %s is invalid; setting to default RangeFactor (%f)",
+				cfg.SchedulerConf.RangeFactor, cfg.ScraperConf.Target, defaultRangeFactor)
+
+			conf.External[i].SchedulerConf.RangeFactor = defaultRangeFactor
 		}
 	}
 }

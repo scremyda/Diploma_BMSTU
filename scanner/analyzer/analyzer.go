@@ -40,9 +40,9 @@ func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 		expectedCN = a.conf.OverrideCN
 	}
 
-	expectedHost := parsedURL.Hostname()
+	expectedHost := parsedURL.Scheme
 	if !matchesDomain(expectedCN, expectedHost) {
-		err = fmt.Errorf("Certificate for %s has unexpected CN: got %s, expected %s",
+		err = fmt.Errorf("certificate for %s has unexpected CN: got %s, expected %s",
 			scrape.Target, scrape.CN, expectedHost)
 	}
 
