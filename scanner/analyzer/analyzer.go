@@ -33,7 +33,7 @@ func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 	if err != nil {
 		return fmt.Errorf("invalid URL %s: %v", scrape.Target, err)
 	}
-	host := parsedURL.Hostname()
+	host := parsedURL.Scheme
 
 	expectedPattern := a.conf.OverrideCN
 	if expectedPattern == "" {
