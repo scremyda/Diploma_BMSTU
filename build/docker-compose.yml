@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    command: ["-c", "/app/config.yaml"]
+    volumes:
+      - ./scanner/cmd/config.yaml:/app/config.yaml
+
+  postgres:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pgqdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../init/init_pgq.sql:/docker-entrypoint-initdb.d/init_pgq.sql
+
+volumes:
+  pgdata:

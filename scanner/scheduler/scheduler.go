@@ -74,8 +74,15 @@ func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *s
 		}
 
 		err = an.Analyze(ctx, scrapeInfo)
+
+		event := saver.ErrorEvent{
+			Target:  scrapeInfo.Target,
+			Message: err.Error(),
+		}
 		if err != nil {
-			sv.Save(err)
+			if err := sv.Save(ctx, event); err != nil {
+				log.Println("save error: ", err)
+			}
 		} else {
 			log.Printf("Certificate for %s is OK: expires in %s, CN = %s", scrapeInfo.Target, scrapeInfo.ExpiresIn, scrapeInfo.CN)
 		}

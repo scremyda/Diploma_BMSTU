@@ -2,16 +2,12 @@ package saver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgtype/pgxtype"
 )
 
-const (
-	saveErrors = ``
-)
-
-type Conf struct {
-}
+const saveErrors = "SELECT pgq.insert_event('error_queue', 'error', $1)"
 
 type Saver struct {
 	db pgxtype.Querier
@@ -23,14 +19,19 @@ func NewSaver(db pgxtype.Querier) *Saver {
 	}
 }
 
-func (s *Saver) Save(ctx context.Context, err error) {
-	fmt.Println("[WARNING]", err)
+type ErrorEvent struct {
+	Target  string `json:"target"`
+	Message string `json:"message"`
+}
 
-	_, err := s.db.Exec(ctx, saveErrors)
+func (s *Saver) Save(ctx context.Context, event ErrorEvent) error {
+	data, err := json.Marshal(event)
 	if err != nil {
-		err = fmt.Errorf("error happened in rows.Scan: %w", err)
-
-		return uuid.UUID{}, err
+		return err
 	}
 
+	fmt.Println("[WARNING]", string(data))
+
+	_, err = s.db.Exec(ctx, saveErrors, string(data))
+	return err
 }

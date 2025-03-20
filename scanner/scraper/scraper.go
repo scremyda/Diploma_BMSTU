@@ -24,6 +24,7 @@ type Scrape struct {
 	Target    string
 	ExpiresIn time.Duration
 	CN        string
+	SANs      []string
 }
 
 func NewScraper(cfg Conf) *Scraper {
@@ -70,11 +71,12 @@ func (r *Scraper) Scrape(ctx context.Context) (Scrape, error) {
 	if len(conn.ConnectionState().PeerCertificates) == 0 {
 		return Scrape{}, errors.New("no peer certificates found")
 	}
-	cert := conn.ConnectionState().PeerCertificates[0] //Need to check wildard, subject alternative name, ip
+	cert := conn.ConnectionState().PeerCertificates[0]
 
 	return Scrape{
 		Target:    addr.String(),
 		CN:        cert.Subject.CommonName,
 		ExpiresIn: time.Until(cert.NotAfter),
+		SANs:      cert.DNSNames,
 	}, nil
 }

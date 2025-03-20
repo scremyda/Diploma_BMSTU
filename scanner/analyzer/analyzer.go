@@ -27,37 +27,42 @@ func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 	if scrape.ExpiresIn < a.conf.AlertInterval {
 		return fmt.Errorf("certificate for %s expires in %s (alert threshold: %s)",
 			scrape.Target, scrape.ExpiresIn, a.conf.AlertInterval)
-
 	}
 
 	parsedURL, err := url.Parse(scrape.Target)
 	if err != nil {
 		return fmt.Errorf("invalid URL %s: %v", scrape.Target, err)
 	}
+	host := parsedURL.Hostname()
 
-	expectedCN := scrape.CN
-	if a.conf.OverrideCN != "" {
-		expectedCN = a.conf.OverrideCN
+	expectedPattern := a.conf.OverrideCN
+	if expectedPattern == "" {
+		expectedPattern = scrape.CN
 	}
 
-	expectedHost := parsedURL.Scheme
-	if !matchesDomain(expectedCN, expectedHost) {
-		err = fmt.Errorf("certificate for %s has unexpected CN: got %s, expected %s",
-			scrape.Target, scrape.CN, expectedHost)
+	if !matchesDomain(expectedPattern, host) && !contains(scrape.SANs, host) {
+		return fmt.Errorf("certificate for %s has unexpected CN: got %s, expected %s", scrape.Target, scrape.CN, host)
 	}
 
-	return err
+	return nil
 }
 
 func matchesDomain(pattern, host string) bool {
 	if pattern == host {
 		return true
 	}
-
 	if len(pattern) > 2 && pattern[0] == '*' && pattern[1] == '.' {
 		domain := pattern[2:]
 		return len(host) >= len(domain) && host[len(host)-len(domain):] == domain
 	}
+	return false
+}
 
+func contains(sans []string, host string) bool {
+	for _, s := range sans {
+		if matchesDomain(s, host) {
+			return true
+		}
+	}
 	return false
 }
