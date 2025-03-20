@@ -9,11 +9,11 @@ external:
       timeout: 3s
 
   - scraper_conf:
-      target: "https://ya.ru:443"
+      target: ""
       timeout: 1m
     analyzer_conf:
       alert_interval: 10m
-      override_cn: ""
+      override_cn: "qq"
     scheduler_conf:
       timeout: 1m
 
@@ -22,8 +22,8 @@ internal:
   min_scrape_interval: 10s
 
 database:
-  db_name: pgqdb
-  db_pass: postgres
-  db_host: postgres
+  db_user: "postgres"
+  db_pass: "postgres"
+  db_host: "postgres"
   db_port: 5432
-  db_user: postgres
+  db_name: "pgqdb"

@@ -1,0 +1,15 @@
+database:
+  db_user: "postgres"
+  db_pass: "postgres"
+  db_host: "postgres"
+  db_port: 5432
+  db_name: "pgqdb"
+
+telegram:
+  bot_token: ""
+  chat_id: 000
+
+queue:
+  queue_name: "error_queue"
+  consumer_name: "telegram_bot_consumer"
+  poll_interval: "5s"

@@ -9,12 +9,12 @@ COPY ./ ./
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s" \
-    -o /app/scanner.bin ./scanner/cmd/
+    -o /app/alerter.bin ./alerter/cmd/
 
 FROM alpine:3.21
 
-COPY --from=builder /app/scanner.bin /app/scanner
+COPY --from=builder /app/alerter.bin /app/alerter
 
 WORKDIR /app
 
-CMD ["/app/scanner"]
+CMD ["/app/alerter"]

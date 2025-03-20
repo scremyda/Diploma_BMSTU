@@ -27,7 +27,7 @@ type Scrape struct {
 	SANs      []string
 }
 
-func NewScraper(cfg Conf) *Scraper {
+func New(cfg Conf) *Scraper {
 	return &Scraper{
 		conf: cfg,
 	}

@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"diploma/models"
 	"diploma/scanner/analyzer"
 	"diploma/scanner/saver"
 	"diploma/scanner/scraper"
@@ -23,7 +24,7 @@ type Scheduler struct {
 	saver    *saver.Saver
 }
 
-func NewScheduler(
+func New(
 	cfg Conf,
 	scraper *scraper.Scraper,
 	analyzer *analyzer.Analyzer,
@@ -74,12 +75,12 @@ func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *s
 		}
 
 		err = an.Analyze(ctx, scrapeInfo)
-
-		event := saver.ErrorEvent{
-			Target:  scrapeInfo.Target,
-			Message: err.Error(),
-		}
 		if err != nil {
+			event := models.ErrorEvent{
+				Target:  scrapeInfo.Target,
+				Message: err.Error(),
+			}
+
 			if err := sv.Save(ctx, event); err != nil {
 				log.Println("save error: ", err)
 			}

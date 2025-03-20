@@ -1,15 +1,26 @@
 version: "3.8"
 
 services:
-  app:
+  scanner:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: ./build/scanner/Dockerfile
     depends_on:
       - postgres
-    command: ["-c", "/app/config.yaml"]
+    command: [ "/app/scanner", "-c", "/app/config.yaml" ]
     volumes:
-      - ./scanner/cmd/config.yaml:/app/config.yaml
+      - ../scanner/cmd/config.yaml:/app/config.yaml
+
+  alerter:
+    build:
+      context: ..
+      dockerfile: ./build/alerter/Dockerfile
+    depends_on:
+      - postgres
+    command: [ "/app/alerter", "-c", "/app/config.yaml" ]
+    volumes:
+      - ../alerter/cmd/config.yaml:/app/config.yaml
+    restart: always
 
   postgres:
     build:
@@ -22,7 +33,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/14/data
       - ../init/init_pgq.sql:/docker-entrypoint-initdb.d/init_pgq.sql
 
 volumes:

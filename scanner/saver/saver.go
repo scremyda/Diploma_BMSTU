@@ -2,6 +2,7 @@ package saver
 
 import (
 	"context"
+	"diploma/models"
 	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgtype/pgxtype"
@@ -13,18 +14,13 @@ type Saver struct {
 	db pgxtype.Querier
 }
 
-func NewSaver(db pgxtype.Querier) *Saver {
+func New(db pgxtype.Querier) *Saver {
 	return &Saver{
 		db: db,
 	}
 }
 
-type ErrorEvent struct {
-	Target  string `json:"target"`
-	Message string `json:"message"`
-}
-
-func (s *Saver) Save(ctx context.Context, event ErrorEvent) error {
+func (s *Saver) Save(ctx context.Context, event models.ErrorEvent) error {
 	data, err := json.Marshal(event)
 	if err != nil {
 		return err

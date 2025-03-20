@@ -48,28 +48,28 @@ func main() {
 			conf.Database.DBName,
 		),
 	)
-	if err != nil {
-		log.Println("failed to open postgres", err)
-		return
-	}
-	defer db.Close()
+	//if err != nil {
+	//	log.Println("failed to open postgres", err)
+	//	return
+	//}
+	//defer db.Close()
+	//
+	//if err = db.Ping(ctx); err != nil {
+	//	log.Println("failed to ping postgres", err)
+	//	return
+	//}
 
-	if err = db.Ping(ctx); err != nil {
-		log.Println("failed to ping postgres", err)
-		return
-	}
-
-	saver := saver.NewSaver(db)
+	saver := saver.New(db)
 
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, conf.Internal.PoolSize)
 	for _, cfg := range conf.External {
 		wg.Add(1)
 
-		scraper := scraper.NewScraper(cfg.ScraperConf)
+		scraper := scraper.New(cfg.ScraperConf)
 		analyzer := analyzer.NewAnalyzer(cfg.AnalyzerConf)
 
-		scheduler := scheduler.NewScheduler(
+		scheduler := scheduler.New(
 			cfg.SchedulerConf,
 			scraper,
 			analyzer,
