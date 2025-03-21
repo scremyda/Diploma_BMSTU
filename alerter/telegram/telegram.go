@@ -34,8 +34,8 @@ func NewTelegramBot(repo repo.QueueRepo, conf Config) (*TelegramBot, error) {
 	}, nil
 }
 
-func (tb *TelegramBot) ProcessQueue(ctx context.Context) {
-	ticker := time.NewTicker(tb.repo.PollInterval())
+func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
+	ticker := time.NewTicker(tb.repo.PollInterval()) //TODO: Перенести в конфиг тг
 	defer ticker.Stop()
 
 	for {
