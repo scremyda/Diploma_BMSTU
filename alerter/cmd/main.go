@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -44,7 +45,12 @@ func main() {
 		log.Fatalf("Error create telegram bot: %v", err)
 	}
 
-	go telegramBot.ProcessQueue(ctx, conf.Queue.PollInterval)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		telegramBot.ProcessQueue(ctx, conf.Queue.PollInterval)
+	}()
 
-	select {}
+	wg.Wait()
 }
