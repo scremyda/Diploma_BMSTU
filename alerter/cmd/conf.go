@@ -1,24 +1,18 @@
 package main
 
 import (
+	"diploma/alerter/db"
 	"diploma/alerter/repo"
 	"diploma/alerter/telegram"
-	"gopkg.in/yaml.v3"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Database DatabaseConfig          `yaml:"database"`
-	Telegram telegram.TelegramConfig `yaml:"telegram"`
-	Queue    repo.QueueConfig        `yaml:"queue"`
-}
-
-type DatabaseConfig struct {
-	DBUser string `yaml:"db_user"`
-	DBPass string `yaml:"db_pass"`
-	DBHost string `yaml:"db_host"`
-	DBPort int    `yaml:"db_port"`
-	DBName string `yaml:"db_name"`
+	Database db.Config       `yaml:"database"`
+	Telegram telegram.Config `yaml:"telegram"`
+	Queue    repo.Config     `yaml:"queue"`
 }
 
 func ReadConf(cfgPath string) (*Config, error) {
