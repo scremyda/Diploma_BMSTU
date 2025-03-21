@@ -20,6 +20,7 @@ type QueueRepo interface {
 	NextBatch(ctx context.Context) (int64, error)
 	GetBatchEvents(ctx context.Context, batchID int64) ([]models.ErrorEvent, error)
 	FinishBatch(ctx context.Context, batchID int64) error
+	PollInterval() time.Duration
 }
 
 type Repo struct {
@@ -92,4 +93,8 @@ func (r *Repo) FinishBatch(ctx context.Context, batchID int64) error {
 	)
 
 	return err
+}
+
+func (r *Repo) PollInterval() time.Duration {
+	return r.conf.PollInterval
 }
