@@ -49,7 +49,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		telegramBot.ProcessQueue(ctx, conf.Queue.PollInterval)
+		telegramBot.ProcessQueue(ctx)
 	}()
 
 	wg.Wait()

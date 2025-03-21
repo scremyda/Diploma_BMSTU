@@ -21,6 +21,19 @@ type TelegramBot struct {
 	conf Config
 }
 
+func NewTelegramBot(repo repo.QueueRepo, conf Config) (*TelegramBot, error) {
+	bot, err := tgbotapi.NewBotAPI(conf.BotToken)
+	if err != nil {
+		return nil, fmt.Errorf("error creating telegram bot: %w", err)
+	}
+
+	return &TelegramBot{
+		repo: repo,
+		bot:  bot,
+		conf: conf,
+	}, nil
+}
+
 func (tb *TelegramBot) ProcessQueue(ctx context.Context) {
 	ticker := time.NewTicker(tb.repo.PollInterval())
 	defer ticker.Stop()
