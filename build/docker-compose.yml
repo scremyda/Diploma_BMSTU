@@ -1,10 +1,11 @@
-version: "3.8"
+version: "3.4"
 
 services:
   scanner:
     build:
       context: ..
       dockerfile: ./build/scanner/Dockerfile
+      network: host
     depends_on:
       - postgres
     command: [ "/app/scanner", "-c", "/app/config.yaml" ]
@@ -15,6 +16,7 @@ services:
     build:
       context: ..
       dockerfile: ./build/alerter/Dockerfile
+      network: host
     depends_on:
       - postgres
     command: [ "/app/alerter", "-c", "/app/config.yaml" ]
@@ -26,6 +28,7 @@ services:
     build:
       context: ./postgres
       dockerfile: Dockerfile
+      network: host
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
