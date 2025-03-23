@@ -5,13 +5,12 @@ import (
 	"diploma/alerter/db"
 	"diploma/alerter/repo"
 	"diploma/alerter/telegram"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 func main() {
@@ -30,6 +29,8 @@ func main() {
 		log.Printf("Received signal: %s. Initiating shutdown...", s)
 		cancel()
 	}()
+
+	//time.Sleep(60 * time.Second)
 
 	db, err := db.New(ctx, conf.Database)
 	if err != nil {

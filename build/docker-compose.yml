@@ -1,28 +1,28 @@
 version: "3.4"
 
 services:
-  scanner:
-    build:
-      context: ..
-      dockerfile: ./build/scanner/Dockerfile
-      network: host
-    depends_on:
-      - postgres
-    command: [ "/app/scanner", "-c", "/app/config.yaml" ]
-    volumes:
-      - ../scanner/cmd/config.yaml:/app/config.yaml
-
-  alerter:
-    build:
-      context: ..
-      dockerfile: ./build/alerter/Dockerfile
-      network: host
-    depends_on:
-      - postgres
-    command: [ "/app/alerter", "-c", "/app/config.yaml" ]
-    volumes:
-      - ../alerter/cmd/config.yaml:/app/config.yaml
-    restart: always
+#  scanner:
+#    build:
+#      context: ..
+#      dockerfile: ./build/scanner/Dockerfile
+#      network: host
+#    depends_on:
+#      - alerter
+#    command: [ "/app/scanner", "-c", "/app/config.yaml" ]
+#    volumes:
+#      - ../scanner/cmd/config.yaml:/app/config.yaml
+#
+#  alerter:
+#    build:
+#      context: ..
+#      dockerfile: ./build/alerter/Dockerfile
+#      network: host
+#    depends_on:
+#      - postgres
+#    command: [ "/app/alerter", "-c", "/app/config.yaml" ]
+#    volumes:
+#      - ../alerter/cmd/config.yaml:/app/config.yaml
+#    restart: always
 
   postgres:
     build:
@@ -36,8 +36,13 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/14/data
+#      - pgdata:/var/lib/postgresql/14/data
       - ../init/init_pgq.sql:/docker-entrypoint-initdb.d/init_pgq.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-volumes:
-  pgdata:
+#volumes:
+#  pgdata:

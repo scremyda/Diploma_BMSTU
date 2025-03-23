@@ -9,7 +9,7 @@ external:
       timeout: 3s
 
   - scraper_conf:
-      target: ""
+      target: "https://expired.badssl.com:443"
       timeout: 1m
     analyzer_conf:
       alert_interval: 10m
@@ -24,6 +24,6 @@ internal:
 database:
   db_user: "postgres"
   db_pass: "postgres"
-  db_host: "postgres"
+  db_host: "127.0.0.1"
   db_port: 5432
   db_name: "pgqdb"

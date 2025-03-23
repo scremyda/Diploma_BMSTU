@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"diploma/scanner/analyzer"
+	"diploma/scanner/db"
 	"diploma/scanner/saver"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
-	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"os"
 	"os/signal"
@@ -38,26 +37,19 @@ func main() {
 		cancel()
 	}()
 
-	db, err := pgxpool.Connect(
-		ctx,
-		fmt.Sprintf(databaseConnectionStr,
-			conf.Database.DBUser,
-			conf.Database.DBPass,
-			conf.Database.DBHost,
-			conf.Database.DBPort,
-			conf.Database.DBName,
-		),
-	)
-	//if err != nil {
-	//	log.Println("failed to open postgres", err)
-	//	return
-	//}
-	//defer db.Close()
-	//
-	//if err = db.Ping(ctx); err != nil {
-	//	log.Println("failed to ping postgres", err)
-	//	return
-	//}
+	//time.Sleep(60 * time.Second)
+
+	db, err := db.New(ctx, conf.Database)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer db.Close()
+
+	if err = db.Ping(ctx); err != nil {
+		log.Println("failed to ping postgres", err)
+		return
+	}
 
 	saver := saver.New(db)
 

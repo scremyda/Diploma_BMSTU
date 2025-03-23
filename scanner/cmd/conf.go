@@ -2,6 +2,7 @@ package main
 
 import (
 	"diploma/scanner/analyzer"
+	"diploma/scanner/db"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
 	"log"
@@ -22,20 +23,12 @@ type Config struct {
 		SchedulerConf scheduler.Conf `yaml:"scheduler_conf"`
 	} `yaml:"external"`
 	Internal InternalConf `yaml:"internal"`
-	Database Database     `yaml:"database"`
+	Database db.Config    `yaml:"database"`
 }
 
 type InternalConf struct {
 	PoolSize          int           `yaml:"pool_size"`
 	MinScrapeInterval time.Duration `yaml:"min_scrape_interval"`
-}
-
-type Database struct {
-	DBName string `yaml:"db_name"`
-	DBPass string `yaml:"db_pass"`
-	DBHost string `yaml:"db_host"`
-	DBPort int    `yaml:"db_port"`
-	DBUser string `yaml:"db_user"`
 }
 
 func ReadConf(cfgPath string) (*Config, error) {

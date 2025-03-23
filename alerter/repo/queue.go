@@ -39,7 +39,7 @@ func (r *Repo) NextBatch(ctx context.Context) (int64, error) {
 	var batchID int64
 	err := r.db.QueryRow(
 		ctx,
-		"SELECT pgq.next_batch($1, $2)",
+		"SELECT * FROM pgq.next_batch($1, $2)",
 		r.conf.QueueName,
 		r.conf.ConsumerName,
 	).Scan(&batchID)
@@ -53,7 +53,7 @@ func (r *Repo) NextBatch(ctx context.Context) (int64, error) {
 func (r *Repo) GetBatchEvents(ctx context.Context, batchID int64) ([]models.ErrorEvent, error) {
 	rows, err := r.db.Query(
 		ctx,
-		"SELECT ev_id, ev_type, ev_data FROM pgq.get_batch_events($1)",
+		"SELECT * FROM ev_id, ev_type, ev_data FROM pgq.get_batch_events($1)",
 		batchID,
 	)
 	if err != nil {
@@ -86,7 +86,7 @@ func (r *Repo) GetBatchEvents(ctx context.Context, batchID int64) ([]models.Erro
 func (r *Repo) FinishBatch(ctx context.Context, batchID int64) error {
 	_, err := r.db.Exec(
 		ctx,
-		"SELECT pgq.finish_batch($1, $2, $3)",
+		"SELECT * FROM pgq.finish_batch($1, $2, $3)",
 		r.conf.QueueName,
 		r.conf.ConsumerName,
 		batchID,

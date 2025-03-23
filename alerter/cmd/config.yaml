@@ -1,13 +1,13 @@
 database:
   db_user: "postgres"
   db_pass: "postgres"
-  db_host: "postgres"
+  db_host: "127.0.0.1"
   db_port: 5432
   db_name: "pgqdb"
 
 telegram:
   bot_token: ""
-  chat_id: 000
+  chat_id:
 
 queue:
   queue_name: "error_queue"

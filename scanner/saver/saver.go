@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgtype/pgxtype"
 )
 
-const saveErrors = "SELECT pgq.insert_event('error_queue', 'error', $1)"
+const saveErrors = "SELECT * FROM pgq.insert_event('error_queue', 'error', $1)"
 
 type Saver struct {
 	db pgxtype.Querier
