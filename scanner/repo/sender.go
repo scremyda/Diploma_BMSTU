@@ -29,6 +29,12 @@ func New(db pgxtype.Querier, conf Config) *Repo {
 func (s *Repo) Send(ctx context.Context, event string) error {
 	fmt.Println("[WARNING]", event)
 
-	_, err := s.db.Exec(ctx, saveErrors, event)
+	_, err := s.db.Exec(
+		ctx,
+		saveErrors,
+		s.conf.QueueName,
+		s.conf.EventName,
+		event,
+	)
 	return err
 }
