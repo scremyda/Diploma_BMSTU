@@ -4,8 +4,9 @@ import (
 	"context"
 	"diploma/models"
 	"diploma/scanner/analyzer"
-	"diploma/scanner/saver"
+	"diploma/scanner/repo"
 	"diploma/scanner/scraper"
+	"encoding/json"
 	"log"
 	"math/rand/v2"
 	"sync"
@@ -21,14 +22,14 @@ type Scheduler struct {
 	conf     Conf
 	scraper  *scraper.Scraper
 	analyzer *analyzer.Analyzer
-	saver    *saver.Saver
+	saver    *repo.Repo
 }
 
 func New(
 	cfg Conf,
 	scraper *scraper.Scraper,
 	analyzer *analyzer.Analyzer,
-	saver *saver.Saver,
+	saver *repo.Repo,
 ) *Scheduler {
 	return &Scheduler{
 		conf:     cfg,
@@ -62,7 +63,7 @@ func (s *Scheduler) Schedule(
 	}
 }
 
-func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *saver.Saver, semaphore chan struct{}) {
+func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *repo.Repo, semaphore chan struct{}) {
 	semaphore <- struct{}{}
 	go func() {
 		defer func() {
@@ -81,7 +82,13 @@ func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *s
 				Message: err.Error(),
 			}
 
-			if err := sv.Save(ctx, event); err != nil {
+			eventByte, err := json.Marshal(event)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if err := sv.Send(ctx, string(eventByte)); err != nil {
 				log.Println("save error: ", err)
 			}
 		} else {

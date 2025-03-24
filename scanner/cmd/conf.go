@@ -3,6 +3,7 @@ package main
 import (
 	"diploma/scanner/analyzer"
 	"diploma/scanner/db"
+	"diploma/scanner/repo"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
 	"log"
@@ -24,6 +25,7 @@ type Config struct {
 	} `yaml:"external"`
 	Internal InternalConf `yaml:"internal"`
 	Database db.Config    `yaml:"database"`
+	Queue    repo.Config  `yaml:"queue"`
 }
 
 type InternalConf struct {

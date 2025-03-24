@@ -11,17 +11,18 @@ import (
 )
 
 type Config struct {
-	BotToken string `yaml:"bot_token"`
-	ChatID   int64  `yaml:"chat_id"`
+	BotToken         string        `yaml:"bot_token"`
+	GroupChannel     string        `yaml:"group_channel"`
+	MessagesInterval time.Duration `yaml:"messages_interval"`
 }
 
 type TelegramBot struct {
-	repo repo.QueueRepo
+	repo repo.Queue
 	bot  *tgbotapi.BotAPI
 	conf Config
 }
 
-func NewTelegramBot(repo repo.QueueRepo, conf Config) (*TelegramBot, error) {
+func NewTelegramBot(repo repo.Queue, conf Config) (*TelegramBot, error) {
 	bot, err := tgbotapi.NewBotAPI(conf.BotToken)
 	if err != nil {
 		return nil, fmt.Errorf("error creating telegram bot: %w", err)
@@ -35,7 +36,7 @@ func NewTelegramBot(repo repo.QueueRepo, conf Config) (*TelegramBot, error) {
 }
 
 func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
-	ticker := time.NewTicker(tb.repo.PollInterval()) //TODO: Перенести в конфиг тг
+	ticker := time.NewTicker(tb.conf.MessagesInterval)
 	defer ticker.Stop()
 
 	for {
@@ -50,7 +51,6 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 				continue
 			}
 			if batchID <= 0 {
-				// Если событий нет, просто ждем следующего тикера.
 				continue
 			}
 
@@ -80,7 +80,7 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 }
 
 func (tb *TelegramBot) SendMessage(message string) error {
-	msg := tgbotapi.NewMessage(tb.conf.ChatID, message)
+	msg := tgbotapi.NewMessageToChannel(tb.conf.GroupChannel, message)
 	_, err := tb.bot.Send(msg)
 	return err
 }

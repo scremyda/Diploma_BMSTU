@@ -4,7 +4,7 @@ import (
 	"context"
 	"diploma/scanner/analyzer"
 	"diploma/scanner/db"
-	"diploma/scanner/saver"
+	"diploma/scanner/repo"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
 	"log"
@@ -51,7 +51,7 @@ func main() {
 		return
 	}
 
-	saver := saver.New(db)
+	repo := repo.New(db, conf.Queue)
 
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, conf.Internal.PoolSize)
@@ -65,7 +65,7 @@ func main() {
 			cfg.SchedulerConf,
 			scraper,
 			analyzer,
-			saver,
+			repo,
 		)
 
 		go scheduler.Schedule(

@@ -5,22 +5,25 @@ import (
 	"diploma/models"
 	"encoding/json"
 	"log"
-	"time"
 
 	"github.com/jackc/pgtype/pgxtype"
 )
 
+const (
+	nextBatch      = "SELECT * FROM pgq.next_batch($1, $2)"
+	getBatchEvents = "SELECT * FROM ev_id, ev_type, ev_data FROM pgq.get_batch_events($1)"
+	finishBatch    = "SELECT * FROM pgq.finish_batch($1, $2, $3)"
+)
+
 type Config struct {
-	QueueName    string        `yaml:"queue_name"`
-	ConsumerName string        `yaml:"consumer_name"`
-	PollInterval time.Duration `yaml:"poll_interval"`
+	QueueName    string `yaml:"queue_name"`
+	ConsumerName string `yaml:"consumer_name"`
 }
 
-type QueueRepo interface {
+type Queue interface {
 	NextBatch(ctx context.Context) (int64, error)
 	GetBatchEvents(ctx context.Context, batchID int64) ([]models.ErrorEvent, error)
 	FinishBatch(ctx context.Context, batchID int64) error
-	PollInterval() time.Duration
 }
 
 type Repo struct {
@@ -39,7 +42,7 @@ func (r *Repo) NextBatch(ctx context.Context) (int64, error) {
 	var batchID int64
 	err := r.db.QueryRow(
 		ctx,
-		"SELECT * FROM pgq.next_batch($1, $2)",
+		nextBatch,
 		r.conf.QueueName,
 		r.conf.ConsumerName,
 	).Scan(&batchID)
@@ -53,7 +56,7 @@ func (r *Repo) NextBatch(ctx context.Context) (int64, error) {
 func (r *Repo) GetBatchEvents(ctx context.Context, batchID int64) ([]models.ErrorEvent, error) {
 	rows, err := r.db.Query(
 		ctx,
-		"SELECT * FROM ev_id, ev_type, ev_data FROM pgq.get_batch_events($1)",
+		getBatchEvents,
 		batchID,
 	)
 	if err != nil {
@@ -86,15 +89,11 @@ func (r *Repo) GetBatchEvents(ctx context.Context, batchID int64) ([]models.Erro
 func (r *Repo) FinishBatch(ctx context.Context, batchID int64) error {
 	_, err := r.db.Exec(
 		ctx,
-		"SELECT * FROM pgq.finish_batch($1, $2, $3)",
+		finishBatch,
 		r.conf.QueueName,
 		r.conf.ConsumerName,
 		batchID,
 	)
 
 	return err
-}
-
-func (r *Repo) PollInterval() time.Duration {
-	return r.conf.PollInterval
 }

@@ -27,3 +27,8 @@ database:
   db_host: "127.0.0.1"
   db_port: 5432
   db_name: "pgqdb"
+
+queue:
+  queue_name: "error_queue"
+  event_name: "error"
+  

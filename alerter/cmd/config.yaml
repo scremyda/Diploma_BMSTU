@@ -7,9 +7,9 @@ database:
 
 telegram:
   bot_token: ""
-  chat_id:
+  group_channel: "@***"
+  messages_interval: "5s"
 
 queue:
   queue_name: "error_queue"
   consumer_name: "telegram_bot_consumer"
-  poll_interval: "5s"
