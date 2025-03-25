@@ -2,7 +2,8 @@ package telegram
 
 import (
 	"context"
-	"diploma/alerter/repo"
+	"diploma/alerter/consumer"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -12,26 +13,26 @@ import (
 
 type Config struct {
 	BotToken         string        `yaml:"bot_token"`
-	GroupChannel     string        `yaml:"group_channel"`
+	ChatID           int64         `yaml:"chat_id"`
 	MessagesInterval time.Duration `yaml:"messages_interval"`
 }
 
 type TelegramBot struct {
-	repo repo.Queue
-	bot  *tgbotapi.BotAPI
-	conf Config
+	consumer consumer.Interface
+	bot      *tgbotapi.BotAPI
+	conf     Config
 }
 
-func NewTelegramBot(repo repo.Queue, conf Config) (*TelegramBot, error) {
+func NewTelegramBot(consumer consumer.Interface, conf Config) (*TelegramBot, error) {
 	bot, err := tgbotapi.NewBotAPI(conf.BotToken)
 	if err != nil {
 		return nil, fmt.Errorf("error creating telegram bot: %w", err)
 	}
 
 	return &TelegramBot{
-		repo: repo,
-		bot:  bot,
-		conf: conf,
+		consumer: consumer,
+		bot:      bot,
+		conf:     conf,
 	}, nil
 }
 
@@ -45,20 +46,12 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 			log.Println("Stop events processing")
 			return
 		case <-ticker.C:
-			batchID, err := tb.repo.NextBatch(ctx)
+			events, err := tb.consumer.GetEvents(ctx)
 			if err != nil {
-				log.Printf("Error receiving new batch: %v", err)
-				continue
-			}
-			if batchID <= 0 {
-				continue
-			}
-
-			events, err := tb.repo.GetBatchEvents(ctx, batchID)
-			if err != nil {
-				log.Printf("Error getting batch events for batch %d: %v", batchID, err)
-				tb.repo.FinishBatch(ctx, batchID)
-				continue
+				if !errors.Is(err, consumer.ErrFinishBatch) {
+					log.Printf("Error getting events: %v", err)
+					continue
+				}
 			}
 
 			for _, event := range events {
@@ -69,18 +62,12 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 					log.Printf("Message sent: %s", text)
 				}
 			}
-
-			if err := tb.repo.FinishBatch(ctx, batchID); err != nil {
-				log.Printf("Error finishing batch %d: %v", batchID, err)
-			} else {
-				log.Printf("Batch %d processed", batchID)
-			}
 		}
 	}
 }
 
 func (tb *TelegramBot) SendMessage(message string) error {
-	msg := tgbotapi.NewMessageToChannel(tb.conf.GroupChannel, message)
+	msg := tgbotapi.NewMessage(tb.conf.ChatID, message)
 	_, err := tb.bot.Send(msg)
 	return err
 }

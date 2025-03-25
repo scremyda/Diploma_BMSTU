@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"diploma/alerter/consumer"
 	"diploma/alerter/db"
 	"diploma/alerter/repo"
 	"diploma/alerter/telegram"
@@ -30,8 +31,6 @@ func main() {
 		cancel()
 	}()
 
-	//time.Sleep(60 * time.Second)
-
 	db, err := db.New(ctx, conf.Database)
 	if err != nil {
 		log.Println(err)
@@ -39,9 +38,14 @@ func main() {
 	}
 	defer db.Close()
 
-	queueRepo := repo.New(db, conf.Queue)
+	queueRepo := repo.NewQueue(db)
 
-	telegramBot, err := telegram.NewTelegramBot(queueRepo, conf.Telegram)
+	consumer, err := consumer.New(ctx, queueRepo, conf.Consumer)
+	if err != nil {
+		log.Fatalf("Error create consumer: %v", err)
+	}
+
+	telegramBot, err := telegram.NewTelegramBot(consumer, conf.Telegram)
 	if err != nil {
 		log.Fatalf("Error create telegram bot: %v", err)
 	}

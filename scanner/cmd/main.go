@@ -4,6 +4,7 @@ import (
 	"context"
 	"diploma/scanner/analyzer"
 	"diploma/scanner/db"
+	"diploma/scanner/producer"
 	"diploma/scanner/repo"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
@@ -12,10 +13,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-)
-
-const (
-	databaseConnectionStr string = "postgres://%v:%v@%v:%v/%v?sslmode=disable"
 )
 
 func main() {
@@ -37,8 +34,6 @@ func main() {
 		cancel()
 	}()
 
-	//time.Sleep(60 * time.Second)
-
 	db, err := db.New(ctx, conf.Database)
 	if err != nil {
 		log.Println(err)
@@ -51,7 +46,11 @@ func main() {
 		return
 	}
 
-	repo := repo.New(db, conf.Queue)
+	repo := repo.NewQueue(db)
+	producer, err := producer.New(ctx, repo, conf.Producer)
+	if err != nil {
+		log.Fatalf("Error create producer: %v", err)
+	}
 
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, conf.Internal.PoolSize)
@@ -65,7 +64,7 @@ func main() {
 			cfg.SchedulerConf,
 			scraper,
 			analyzer,
-			repo,
+			producer,
 		)
 
 		go scheduler.Schedule(

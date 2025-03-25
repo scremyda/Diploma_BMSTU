@@ -4,9 +4,8 @@ import (
 	"context"
 	"diploma/models"
 	"diploma/scanner/analyzer"
-	"diploma/scanner/repo"
+	"diploma/scanner/producer"
 	"diploma/scanner/scraper"
-	"encoding/json"
 	"log"
 	"math/rand/v2"
 	"sync"
@@ -22,20 +21,20 @@ type Scheduler struct {
 	conf     Conf
 	scraper  *scraper.Scraper
 	analyzer *analyzer.Analyzer
-	saver    *repo.Repo
+	producer producer.Interface
 }
 
 func New(
 	cfg Conf,
 	scraper *scraper.Scraper,
 	analyzer *analyzer.Analyzer,
-	saver *repo.Repo,
+	producer producer.Interface,
 ) *Scheduler {
 	return &Scheduler{
 		conf:     cfg,
 		scraper:  scraper,
 		analyzer: analyzer,
-		saver:    saver,
+		producer: producer,
 	}
 }
 
@@ -49,7 +48,7 @@ func (s *Scheduler) Schedule(
 	ticker := time.NewTicker(s.randomizeInterval())
 	defer ticker.Stop()
 
-	Scan(ctx, s.scraper, s.analyzer, s.saver, semaphore)
+	Scan(ctx, s.scraper, s.analyzer, s.producer, semaphore)
 
 	for {
 		select {
@@ -58,12 +57,18 @@ func (s *Scheduler) Schedule(
 			return ctx.Err()
 
 		case <-ticker.C:
-			Scan(ctx, s.scraper, s.analyzer, s.saver, semaphore)
+			Scan(ctx, s.scraper, s.analyzer, s.producer, semaphore)
 		}
 	}
 }
 
-func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *repo.Repo, semaphore chan struct{}) {
+func Scan(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	an *analyzer.Analyzer,
+	pr producer.Interface,
+	semaphore chan struct{},
+) {
 	semaphore <- struct{}{}
 	go func() {
 		defer func() {
@@ -81,18 +86,18 @@ func Scan(ctx context.Context, sc *scraper.Scraper, an *analyzer.Analyzer, sv *r
 				Target:  scrapeInfo.Target,
 				Message: err.Error(),
 			}
-
-			eventByte, err := json.Marshal(event)
+			err := pr.Produce(ctx, event)
 			if err != nil {
-				log.Println(err)
+				log.Println("Producer error: ", err)
 				return
 			}
-
-			if err := sv.Send(ctx, string(eventByte)); err != nil {
-				log.Println("save error: ", err)
-			}
 		} else {
-			log.Printf("Certificate for %s is OK: expires in %s, CN = %s", scrapeInfo.Target, scrapeInfo.ExpiresIn, scrapeInfo.CN)
+			log.Printf(
+				"Certificate for %s is OK: expires in %s, CN = %s",
+				scrapeInfo.Target,
+				scrapeInfo.ExpiresIn,
+				scrapeInfo.CN,
+			)
 		}
 	}()
 }

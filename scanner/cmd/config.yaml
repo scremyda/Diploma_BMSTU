@@ -12,10 +12,10 @@ external:
       target: "https://expired.badssl.com:443"
       timeout: 1m
     analyzer_conf:
-      alert_interval: 10m
+      alert_interval: 1m
       override_cn: "qq"
     scheduler_conf:
-      timeout: 1m
+      timeout: 5s
 
 internal:
   pool_size: 10
@@ -24,11 +24,11 @@ internal:
 database:
   db_user: "postgres"
   db_pass: "postgres"
-  db_host: "127.0.0.1"
+  db_host: "postgres"
   db_port: 5432
   db_name: "pgqdb"
 
-queue:
+producer:
   queue_name: "error_queue"
   event_name: "error"
   

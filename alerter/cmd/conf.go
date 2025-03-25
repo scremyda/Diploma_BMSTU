@@ -1,8 +1,8 @@
 package main
 
 import (
+	"diploma/alerter/consumer"
 	"diploma/alerter/db"
-	"diploma/alerter/repo"
 	"diploma/alerter/telegram"
 	"os"
 
@@ -12,7 +12,7 @@ import (
 type Config struct {
 	Database db.Config       `yaml:"database"`
 	Telegram telegram.Config `yaml:"telegram"`
-	Queue    repo.Config     `yaml:"queue"`
+	Consumer consumer.Config `yaml:"consumer"`
 }
 
 func ReadConf(cfgPath string) (*Config, error) {
