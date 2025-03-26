@@ -24,10 +24,7 @@ services:
     restart: always
 
   postgres:
-    build:
-      context: ./postgres
-      dockerfile: Dockerfile
-      # network: host
+    image: tembo.docker.scarf.sh/tembo/pg17-pgmq:latest
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

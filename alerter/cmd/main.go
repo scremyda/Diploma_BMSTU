@@ -4,9 +4,8 @@ import (
 	"context"
 	"diploma/alerter/consumer"
 	"diploma/alerter/db"
-	"diploma/alerter/repo"
 	"diploma/alerter/telegram"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"os"
 	"os/signal"
@@ -38,13 +37,7 @@ func main() {
 	}
 	defer db.Close()
 
-	queueRepo := repo.NewQueue(db)
-
-	consumer, err := consumer.New(ctx, queueRepo, conf.Consumer)
-	if err != nil {
-		log.Fatalf("Error create consumer: %v", err)
-	}
-
+	consumer := consumer.New(db, conf.Consumer)
 	telegramBot, err := telegram.NewTelegramBot(consumer, conf.Telegram)
 	if err != nil {
 		log.Fatalf("Error create telegram bot: %v", err)

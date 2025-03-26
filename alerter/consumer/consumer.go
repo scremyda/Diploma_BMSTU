@@ -2,10 +2,12 @@ package consumer
 
 import (
 	"context"
-	"diploma/alerter/repo"
 	"diploma/models"
+	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/craigpastro/pgmq-go"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/samber/lo"
 	"log"
 )
 
@@ -18,49 +20,62 @@ type Interface interface {
 }
 
 type Config struct {
-	QueueName    string `yaml:"queue_name"`
-	ConsumerName string `yaml:"consumer_name"`
+	QueueName string `yaml:"queue_name"`
+	BatchSize int64  `yaml:"batch_size"`
 }
 
 type Consumer struct {
-	queue repo.Queue
-	conf  Config
+	db   *pgxpool.Pool
+	conf Config
 }
 
-func New(ctx context.Context, queue repo.Queue, conf Config) (*Consumer, error) {
-	err := queue.RegisterConsumer(ctx, conf.QueueName, conf.ConsumerName)
-	if err != nil {
-		return nil, fmt.Errorf("error register consumer: %w", err)
-	}
-
+func New(db *pgxpool.Pool, conf Config) *Consumer {
 	return &Consumer{
-		queue: queue,
-		conf:  conf,
-	}, nil
+		db:   db,
+		conf: conf,
+	}
 }
 
 func (c *Consumer) GetEvents(ctx context.Context) ([]models.ErrorEvent, error) {
-	batchID, err := c.queue.NextBatch(ctx, c.conf.QueueName, c.conf.ConsumerName)
+	tx, err := c.db.Begin(ctx)
 	if err != nil {
-		log.Printf("Error receiving new batch: %v", err)
-		return nil, err
-	}
-	if batchID <= 0 {
-		return nil, errors.New("no batch found")
+		log.Printf("Error starting transaction: %v", err)
+		return []models.ErrorEvent{}, err
 	}
 
-	events, err := c.queue.GetBatchEvents(ctx, batchID)
+	msgs, err := pgmq.ReadBatch(ctx, tx, c.conf.QueueName, 0, c.conf.BatchSize)
 	if err != nil {
-		log.Printf("Error getting batch events for batch %d: %v", batchID, err)
-		return nil, err
+		log.Printf("Error reading message batch: %v", err)
+		return []models.ErrorEvent{}, err
+	}
+	log.Printf("Message batch successfully read, count: %d", len(msgs))
+
+	msgsIDs := lo.Map(msgs, func(x *pgmq.Message, index int) int64 {
+		return x.MsgID
+	})
+
+	_, err = pgmq.DeleteBatch(ctx, tx, c.conf.QueueName, msgsIDs)
+	if err != nil {
+		log.Printf("Error deleting message batch: %v", err)
+		return []models.ErrorEvent{}, err
 	}
 
-	if err := c.queue.FinishBatch(ctx, batchID); err != nil {
-		log.Printf("Error finishing batch %d: %v", batchID, err)
-		return events, ErrFinishBatch
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Printf("Error committing transaction: %v", err)
+		return []models.ErrorEvent{}, err
 	}
 
-	log.Printf("Batch %d processed", batchID)
+	var event models.ErrorEvent
+	events := lo.FilterMap(msgs, func(m *pgmq.Message, _ int) (models.ErrorEvent, bool) {
+		if err = json.Unmarshal(m.Message, &event); err != nil {
+			//TODO: Need to save errors causes / success events mb
+			log.Printf("Error Unmarshal JSON for event %d: %v", m.MsgID, err)
+			return models.ErrorEvent{}, false
+		}
 
-	return events, err
+		return event, true
+	})
+
+	return events, nil
 }

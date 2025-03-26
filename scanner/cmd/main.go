@@ -5,7 +5,6 @@ import (
 	"diploma/scanner/analyzer"
 	"diploma/scanner/db"
 	"diploma/scanner/producer"
-	"diploma/scanner/repo"
 	"diploma/scanner/scheduler"
 	"diploma/scanner/scraper"
 	"log"
@@ -46,8 +45,7 @@ func main() {
 		return
 	}
 
-	repo := repo.NewQueue(db)
-	producer, err := producer.New(ctx, repo, conf.Producer)
+	producer, err := producer.New(ctx, db, conf.Producer)
 	if err != nil {
 		log.Fatalf("Error create producer: %v", err)
 	}

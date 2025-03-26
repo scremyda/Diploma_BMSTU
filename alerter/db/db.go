@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -21,7 +21,7 @@ type Config struct {
 }
 
 func New(ctx context.Context, conf Config) (*pgxpool.Pool, error) {
-	db, err := pgxpool.Connect(
+	db, err := pgxpool.New(
 		ctx,
 		fmt.Sprintf(databaseConnectionStr,
 			conf.DBUser,

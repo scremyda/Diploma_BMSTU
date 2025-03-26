@@ -3,9 +3,10 @@ package producer
 import (
 	"context"
 	"diploma/models"
-	"diploma/scanner/repo"
 	"encoding/json"
 	"fmt"
+	"github.com/craigpastro/pgmq-go"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 )
 
@@ -15,23 +16,22 @@ type Interface interface {
 
 type Config struct {
 	QueueName string `yaml:"queue_name"`
-	EventName string `yaml:"event_name"`
 }
 
 type Producer struct {
-	conf  Config
-	queue repo.Queue
+	db   *pgxpool.Pool
+	conf Config
 }
 
-func New(ctx context.Context, queue repo.Queue, conf Config) (*Producer, error) {
-	err := queue.CreateQueue(ctx, conf.QueueName)
+func New(ctx context.Context, db *pgxpool.Pool, conf Config) (*Producer, error) {
+	err := pgmq.CreateQueue(ctx, db, conf.QueueName)
 	if err != nil {
 		return nil, fmt.Errorf("error register consumer: %w", err)
 	}
 
 	return &Producer{
-		conf:  conf,
-		queue: queue,
+		conf: conf,
+		db:   db,
 	}, nil
 }
 
@@ -42,6 +42,8 @@ func (p *Producer) Produce(ctx context.Context, event models.ErrorEvent) error {
 		return err
 	}
 
-	return p.queue.Send(ctx, string(eventByte), p.conf.QueueName, p.conf.EventName)
+	log.Println("Send error event", string(eventByte))
 
+	_, err = pgmq.Send(ctx, p.db, p.conf.QueueName, eventByte)
+	return err
 }

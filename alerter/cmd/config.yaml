@@ -12,4 +12,4 @@ telegram:
 
 consumer:
   queue_name: "error_queue"
-  consumer_name: "telegram_bot_consumer"
+  batch_size: 10

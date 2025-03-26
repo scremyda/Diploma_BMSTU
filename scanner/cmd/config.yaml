@@ -10,7 +10,7 @@ external:
 
   - scraper_conf:
       target: "https://expired.badssl.com:443"
-      timeout: 1m
+      timeout: 3s
     analyzer_conf:
       alert_interval: 1m
       override_cn: "qq"
@@ -30,5 +30,4 @@ database:
 
 producer:
   queue_name: "error_queue"
-  event_name: "error"
   
