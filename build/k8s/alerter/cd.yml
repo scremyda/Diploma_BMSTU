@@ -24,3 +24,25 @@ spec:
         - name: alerter-config
           configMap:
             name: alerter-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alerter-config
+data:
+  config.yaml: |
+    database:
+      db_user: "postgres"
+      db_pass: "postgres"
+      db_host: "postgres"
+      db_port: 5432
+      db_name: "pgqdb"
+
+    telegram:
+      bot_token: ""
+      chat_id:
+      messages_interval: "5s"
+
+    consumer:
+      queue_name: "error_queue"
+      batch_size: 10

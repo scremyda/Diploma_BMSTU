@@ -1,0 +1,13 @@
+database:
+  db_user: "postgres"
+  db_pass: "postgres"
+  db_host: "postgres"
+  db_port: 5432
+  db_name: "pgqdb"
+
+consumer:
+  queue_name: "error_queue"
+  batch_size: 10
+
+producer:
+  queue_name: "error_queue"
