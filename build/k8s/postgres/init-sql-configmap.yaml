@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-sql
+data:
+  init_pgq.sql: |
+    CREATE EXTENSION IF NOT EXISTS pgmq CASCADE;

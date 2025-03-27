@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alerter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alerter
+  template:
+    metadata:
+      labels:
+        app: alerter
+    spec:
+      containers:
+        - name: alerter
+          image: alerter:latest # replace
+          command: ["/app/alerter", "-c", "/app/config.yaml"]
+          volumeMounts:
+            - name: alerter-config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: alerter-config
+          configMap:
+            name: alerter-config
