@@ -1,26 +1,26 @@
 services:
   scanner:
     build:
-      context: ..
-      dockerfile: ./build/scanner/Dockerfile
+      context: ../../
+      dockerfile: ./build/compose/scanner/Dockerfile
 #      network: host
     depends_on:
       postgres:
         condition: service_healthy
     command: [ "/app/scanner", "-c", "/app/config.yaml" ]
     volumes:
-      - ../scanner/cmd/config.yaml:/app/config.yaml
+      - ../../scanner/cmd/config.yaml:/app/config.yaml
 
   alerter:
     build:
-      context: ..
-      dockerfile: ./build/alerter/Dockerfile
+      context: ../../
+      dockerfile: ./build/compose/alerter/Dockerfile
 #      network: host
     depends_on:
       - scanner
     command: [ "/app/alerter", "-c", "/app/config.yaml" ]
     volumes:
-      - ../alerter/cmd/config.yaml:/app/config.yaml
+      - ../../alerter/cmd/config.yaml:/app/config.yaml
     restart: always
 
   postgres:
@@ -33,7 +33,7 @@ services:
       - "5432:5432"
     volumes:
 #      - pgdata:/var/lib/postgresql/14/data
-      - ../init/init_pgq.sql:/docker-entrypoint-initdb.d/init_pgq.sql
+      - ../../init/init_pgq.sql:/docker-entrypoint-initdb.d/init_pgq.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
