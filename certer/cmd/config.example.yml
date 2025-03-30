@@ -10,4 +10,4 @@ consumer:
   batch_size: 10
 
 producer:
-  queue_name: "error_queue"
+  queue_name: "certer_queue"

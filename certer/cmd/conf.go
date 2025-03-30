@@ -1,6 +1,7 @@
 package main
 
 import (
+	"diploma/certer/certer"
 	"diploma/certer/consumer"
 	"diploma/certer/db"
 	"diploma/certer/producer"
@@ -13,6 +14,8 @@ type Config struct {
 	Database db.Config       `yaml:"database"`
 	Consumer consumer.Config `yaml:"consumer"`
 	Producer producer.Config `yaml:"producer"`
+	Certer   certer.Config   `yaml:"certer"`
+	Setter   certer.Config   `yaml:"setter"`
 }
 
 func ReadConf(cfgPath string) (*Config, error) {

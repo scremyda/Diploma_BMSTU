@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"diploma/models"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -14,7 +15,9 @@ import (
 	"time"
 )
 
-type Domain string
+type Interface interface {
+	GenerateCertSignedByCA(domain string) (string, string, error)
+}
 
 type CertInfo struct {
 	ValidFor time.Duration `yaml:"valid_for"`
@@ -23,7 +26,7 @@ type CertInfo struct {
 }
 
 type Config struct {
-	Certificates map[Domain]CertInfo `yaml:"certificates"`
+	Certificates map[models.Domain]CertInfo `yaml:"certificates"`
 }
 
 type Certer struct {
@@ -37,7 +40,7 @@ func New(conf Config) *Certer {
 }
 
 func (c *Certer) GenerateCertSignedByCA(domain string) (string, string, error) {
-	certInfo, ok := c.conf.Certificates[Domain(domain)]
+	certInfo, ok := c.conf.Certificates[models.Domain(domain)]
 	if !ok {
 		return "", "", fmt.Errorf("no certificate configuration found for domain %s", domain)
 	}
@@ -86,7 +89,9 @@ func (c *Certer) GenerateCertSignedByCA(domain string) (string, string, error) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
-	template.DNSNames = []string{domain}
+	template.DNSNames = []string{
+		domain,
+	}
 	if ip := net.ParseIP(domain); ip != nil {
 		template.IPAddresses = []net.IP{ip}
 	}

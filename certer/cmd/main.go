@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"diploma/certer/certer"
 	"diploma/certer/consumer"
 	"diploma/certer/db"
 	"diploma/certer/producer"
@@ -42,4 +43,5 @@ func main() {
 		log.Println(err)
 		return
 	}
+	certer := certer.New(conf.Certer)
 }
