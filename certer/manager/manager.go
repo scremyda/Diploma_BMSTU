@@ -2,8 +2,8 @@ package manager
 
 import (
 	"context"
-	"diploma/alerter/consumer"
 	"diploma/certer/certer"
+	"diploma/certer/consumer"
 	"diploma/certer/producer"
 	"diploma/certer/setter"
 	"diploma/models"
@@ -57,13 +57,16 @@ func (m *Manager) Manage(ctx context.Context) error {
 				return
 			}
 
-			err = m.setter.Set(ctx, cert, key)
+			err = m.setter.Set(ctx, u.Scheme, cert, key)
 			if err != nil {
 				log.Println(fmt.Errorf("failed to set certs: %w", err))
 				return
 			}
 
-			event := models.ErrorEvent{}
+			event := models.AlerterEvent{
+				Target:  event.Target,
+				Message: fmt.Sprintf("successfully set certs for %s", u.Scheme),
+			}
 
 			err = m.producer.Produce(ctx, event)
 			if err != nil {

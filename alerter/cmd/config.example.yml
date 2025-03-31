@@ -11,5 +11,5 @@ telegram:
   messages_interval: "5s"
 
 consumer:
-  queue_name: "error_queue"
+  queue_name: "alerter_queue"
   batch_size: 10

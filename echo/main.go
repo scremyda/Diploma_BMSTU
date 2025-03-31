@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 func echoHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,8 +48,9 @@ func certificateReloader(certFile, keyFile string) func(clientHello *tls.ClientH
 }
 
 func main() {
-	certFile := "tls.crt"
-	keyFile := "tls.key"
+	time.Sleep(60 * time.Second)
+	certFile := "/app/certs/example.com/cert.pem"
+	keyFile := "/app/certs/example.com/key.pem"
 
 	tlsConfig := &tls.Config{
 		GetCertificate: certificateReloader(certFile, keyFile),

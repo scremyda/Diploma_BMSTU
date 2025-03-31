@@ -58,7 +58,7 @@ func (c *Certer) GenerateCertSignedByCA(domain string) (string, string, error) {
 	if caKeyBlock == nil {
 		return "", "", fmt.Errorf("failed to decode CA private key (PEM)")
 	}
-	caKey, err := x509.ParsePKCS1PrivateKey(caKeyBlock.Bytes)
+	caKey, err := x509.ParsePKCS8PrivateKey(caKeyBlock.Bytes)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to parse CA private key: %w", err)
 	}

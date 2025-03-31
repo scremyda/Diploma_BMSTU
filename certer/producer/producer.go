@@ -11,7 +11,7 @@ import (
 )
 
 type Interface interface {
-	Produce(ctx context.Context, event models.ErrorEvent) error
+	Produce(ctx context.Context, event models.AlerterEvent) error
 }
 
 type Config struct {
@@ -35,7 +35,7 @@ func New(ctx context.Context, db *pgxpool.Pool, conf Config) (*Producer, error) 
 	}, nil
 }
 
-func (p *Producer) Produce(ctx context.Context, event models.ErrorEvent) error {
+func (p *Producer) Produce(ctx context.Context, event models.AlerterEvent) error {
 	eventByte, err := json.Marshal(event)
 	if err != nil {
 		log.Println(err)

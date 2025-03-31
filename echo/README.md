@@ -1,0 +1,1 @@
+openssl req -x509 -nodes -newkey rsa:2048 -keyout example.com.key -out example.com.crt -days 365 -subj "/CN=example.com

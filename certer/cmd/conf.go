@@ -5,6 +5,7 @@ import (
 	"diploma/certer/consumer"
 	"diploma/certer/db"
 	"diploma/certer/producer"
+	"diploma/certer/setter"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -15,7 +16,7 @@ type Config struct {
 	Consumer consumer.Config `yaml:"consumer"`
 	Producer producer.Config `yaml:"producer"`
 	Certer   certer.Config   `yaml:"certer"`
-	Setter   certer.Config   `yaml:"setter"`
+	Setter   setter.Config   `yaml:"setter"`
 }
 
 func ReadConf(cfgPath string) (*Config, error) {

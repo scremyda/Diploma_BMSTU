@@ -80,13 +80,22 @@ func Scan(
 			return
 		}
 
-		err = an.Analyze(ctx, scrapeInfo)
-		if err != nil {
-			event := models.ErrorEvent{
-				Target:  scrapeInfo.Target,
-				Message: err.Error(),
+		errAnalyzer := an.Analyze(ctx, scrapeInfo)
+		if errAnalyzer != nil {
+			certerEvent := models.CerterEvent{
+				Target: scrapeInfo.Target,
 			}
-			err := pr.Produce(ctx, event)
+			err := pr.ProduceToCerter(ctx, certerEvent)
+			if err != nil {
+				log.Println("Producer error: ", err)
+				return
+			}
+
+			alerterEvent := models.AlerterEvent{
+				Target:  scrapeInfo.Target,
+				Message: errAnalyzer.Error(),
+			}
+			err = pr.ProduceToAlerter(ctx, alerterEvent)
 			if err != nil {
 				log.Println("Producer error: ", err)
 				return

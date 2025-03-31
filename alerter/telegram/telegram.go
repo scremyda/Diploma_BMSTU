@@ -46,20 +46,37 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 			log.Println("Stop events processing")
 			return
 		case <-ticker.C:
-			events, err := tb.consumer.GetEvents(ctx)
+			alerterEvents, err := tb.consumer.GetAlerterEvents(ctx)
 			if err != nil {
 				if !errors.Is(err, consumer.ErrFinishBatch) {
-					log.Printf("Error getting events: %v", err)
+					log.Printf("Error getting alerter events: %v", err)
 					continue
 				}
 			}
 
-			for _, event := range events {
-				text := fmt.Sprintf("Error for event %s: %s", event.Target, event.Message)
+			for _, alerterEvent := range alerterEvents {
+				text := fmt.Sprintf("Error for alerter event %s: %s", alerterEvent.Target, alerterEvent.Message)
 				if err := tb.SendMessage(text); err != nil {
 					log.Printf("Error sending message to Telegram: %v", err)
 				} else {
-					log.Printf("Message sent: %s", text)
+					log.Printf("Message alerter sent: %s", text)
+				}
+			}
+
+			certerEvents, err := tb.consumer.GetCerterEvents(ctx)
+			if err != nil {
+				if !errors.Is(err, consumer.ErrFinishBatch) {
+					log.Printf("Error getting certer events: %v", err)
+					continue
+				}
+			}
+
+			for _, certerEvent := range certerEvents {
+				text := fmt.Sprintf("Error for certer event %s: %s", certerEvent.Target)
+				if err := tb.SendMessage(text); err != nil {
+					log.Printf("Error sending message to Telegram: %v", err)
+				} else {
+					log.Printf("Message certer sent: %s", text)
 				}
 			}
 		}

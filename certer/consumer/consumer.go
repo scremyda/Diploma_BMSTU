@@ -11,7 +11,7 @@ import (
 )
 
 type Interface interface {
-	GetEvents(ctx context.Context) ([]models.ErrorEvent, error)
+	GetEvents(ctx context.Context) ([]models.CerterEvent, error)
 }
 
 type Config struct {
@@ -31,17 +31,17 @@ func New(db *pgxpool.Pool, conf Config) *Consumer {
 	}
 }
 
-func (c *Consumer) GetEvents(ctx context.Context) ([]models.ErrorEvent, error) {
+func (c *Consumer) GetEvents(ctx context.Context) ([]models.CerterEvent, error) {
 	tx, err := c.db.Begin(ctx)
 	if err != nil {
 		log.Printf("Error starting transaction: %v", err)
-		return []models.ErrorEvent{}, err
+		return []models.CerterEvent{}, err
 	}
 
 	msgs, err := pgmq.ReadBatch(ctx, tx, c.conf.QueueName, 0, c.conf.BatchSize)
 	if err != nil {
 		log.Printf("Error reading message batch: %v", err)
-		return []models.ErrorEvent{}, err
+		return []models.CerterEvent{}, err
 	}
 	log.Printf("Message batch successfully read, count: %d", len(msgs))
 
@@ -52,21 +52,21 @@ func (c *Consumer) GetEvents(ctx context.Context) ([]models.ErrorEvent, error) {
 	_, err = pgmq.DeleteBatch(ctx, tx, c.conf.QueueName, msgsIDs)
 	if err != nil {
 		log.Printf("Error deleting message batch: %v", err)
-		return []models.ErrorEvent{}, err
+		return []models.CerterEvent{}, err
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
 		log.Printf("Error committing transaction: %v", err)
-		return []models.ErrorEvent{}, err
+		return []models.CerterEvent{}, err
 	}
 
-	var event models.ErrorEvent
-	events := lo.FilterMap(msgs, func(m *pgmq.Message, _ int) (models.ErrorEvent, bool) {
+	var event models.CerterEvent
+	events := lo.FilterMap(msgs, func(m *pgmq.Message, _ int) (models.CerterEvent, bool) {
 		if err = json.Unmarshal(m.Message, &event); err != nil {
 			//TODO: Need to save errors causes / success events mb
 			log.Printf("Error Unmarshal JSON for event %d: %v", m.MsgID, err)
-			return models.ErrorEvent{}, false
+			return models.CerterEvent{}, false
 		}
 
 		return event, true

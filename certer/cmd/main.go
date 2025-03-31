@@ -5,12 +5,17 @@ import (
 	"diploma/certer/certer"
 	"diploma/certer/consumer"
 	"diploma/certer/db"
+	"diploma/certer/manager"
 	"diploma/certer/producer"
+	"diploma/certer/setter"
+	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -44,4 +49,27 @@ func main() {
 		return
 	}
 	certer := certer.New(conf.Certer)
+	setter := setter.New(conf.Setter)
+
+	manager := manager.New(
+		consumer,
+		producer,
+		certer,
+		setter,
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			err = manager.Manage(ctx)
+			if err != nil {
+				log.Println(fmt.Errorf("failes to manage: %s", err))
+			}
+			time.Sleep(5 * time.Second) //TODO: move to config / fix logic
+		}
+	}()
+
+	wg.Wait()
 }

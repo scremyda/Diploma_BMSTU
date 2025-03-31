@@ -23,6 +23,26 @@ services:
       - ../../alerter/cmd/config.yaml:/app/config.yaml
     restart: always
 
+  certer:
+    build:
+      context: ../../
+      dockerfile: ./build/compose/certer/Dockerfile
+    depends_on:
+      - scanner
+    command: [ "/app/certer", "-c", "/app/config.yaml" ]
+    volumes:
+      - ../../certer/cmd/config.yaml:/app/config.yaml
+      - certs:/app/certs
+
+  echo:
+    build:
+      context: ../../
+      dockerfile: ./build/compose/echo/Dockerfile
+    ports:
+      - "8443:8443"
+    volumes:
+      - certs:/app/certs
+
   postgres:
     image: tembo.docker.scarf.sh/tembo/pg17-pgmq:latest
     environment:
@@ -40,5 +60,6 @@ services:
       timeout: 5s
       retries: 5
 
-#volumes:
+volumes:
 #  pgdata:
+  certs:
