@@ -5,17 +5,17 @@ import (
 	"diploma/certer/certer"
 	"diploma/certer/consumer"
 	"diploma/certer/db"
-	"diploma/certer/manager"
 	"diploma/certer/producer"
+	"diploma/certer/scheduler"
 	"diploma/certer/setter"
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -51,7 +51,8 @@ func main() {
 	certer := certer.New(conf.Certer)
 	setter := setter.New(conf.Setter)
 
-	manager := manager.New(
+	scheduler := scheduler.New(
+		conf.Scheduler,
 		consumer,
 		producer,
 		certer,
@@ -62,12 +63,9 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for {
-			err = manager.Manage(ctx)
-			if err != nil {
-				log.Println(fmt.Errorf("failes to manage: %s", err))
-			}
-			time.Sleep(5 * time.Second) //TODO: move to config / fix logic
+		err = scheduler.Schedule(ctx)
+		if err != nil {
+			log.Println(fmt.Errorf("failed to schedule: %s", err))
 		}
 	}()
 

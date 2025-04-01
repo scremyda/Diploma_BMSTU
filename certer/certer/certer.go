@@ -20,9 +20,10 @@ type Interface interface {
 }
 
 type CertInfo struct {
-	ValidFor time.Duration `yaml:"valid_for"`
-	CaCert   string        `yaml:"ca_cert"`
-	CaKey    string        `yaml:"ca_key"`
+	ValidFor     time.Duration `yaml:"valid_for"`
+	CaCert       string        `yaml:"ca_cert"`
+	CaKey        string        `yaml:"ca_key"`
+	Organization string        `yaml:"organization"`
 }
 
 type Config struct {
@@ -80,7 +81,7 @@ func (c *Certer) GenerateCertSignedByCA(domain string) (string, string, error) {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"My CA Signed Org"},
+			Organization: []string{certInfo.Organization},
 			CommonName:   domain,
 		},
 		NotBefore:             notBefore,

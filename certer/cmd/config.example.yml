@@ -15,6 +15,7 @@ producer:
 certer:
   certificates:
     expired.badssl.com:
+      organization: ""
       valid_for: "8760h"  # 1 год
       ca_cert: |
         -----BEGIN CERTIFICATE-----
@@ -30,3 +31,6 @@ setter:
     expired.badssl.com:
       path: "/app/certs/example.com"
       type: ""
+
+scheduler:
+  interval: 10s

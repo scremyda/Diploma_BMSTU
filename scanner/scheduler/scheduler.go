@@ -13,7 +13,7 @@ import (
 )
 
 type Conf struct {
-	Interval    time.Duration `yaml:"timeout"`
+	Interval    time.Duration `yaml:"interval"`
 	RangeFactor float64       `yaml:"range_factor"`
 }
 
@@ -48,7 +48,7 @@ func (s *Scheduler) Schedule(
 	ticker := time.NewTicker(s.randomizeInterval())
 	defer ticker.Stop()
 
-	Scan(ctx, s.scraper, s.analyzer, s.producer, semaphore)
+	s.scan(ctx, semaphore)
 
 	for {
 		select {
@@ -57,16 +57,13 @@ func (s *Scheduler) Schedule(
 			return ctx.Err()
 
 		case <-ticker.C:
-			Scan(ctx, s.scraper, s.analyzer, s.producer, semaphore)
+			s.scan(ctx, semaphore)
 		}
 	}
 }
 
-func Scan(
+func (s *Scheduler) scan(
 	ctx context.Context,
-	sc *scraper.Scraper,
-	an *analyzer.Analyzer,
-	pr producer.Interface,
 	semaphore chan struct{},
 ) {
 	semaphore <- struct{}{}
@@ -74,18 +71,18 @@ func Scan(
 		defer func() {
 			<-semaphore
 		}()
-		scrapeInfo, err := sc.Scrape(ctx)
+		scrapeInfo, err := s.scraper.Scrape(ctx)
 		if err != nil {
 			log.Println("Scraper error: ", err)
 			return
 		}
 
-		errAnalyzer := an.Analyze(ctx, scrapeInfo)
+		errAnalyzer := s.analyzer.Analyze(ctx, scrapeInfo)
 		if errAnalyzer != nil {
 			certerEvent := models.CerterEvent{
 				Target: scrapeInfo.Target,
 			}
-			err := pr.ProduceToCerter(ctx, certerEvent)
+			err := s.producer.ProduceToCerter(ctx, certerEvent)
 			if err != nil {
 				log.Println("Producer error: ", err)
 				return
@@ -95,7 +92,7 @@ func Scan(
 				Target:  scrapeInfo.Target,
 				Message: errAnalyzer.Error(),
 			}
-			err = pr.ProduceToAlerter(ctx, alerterEvent)
+			err = s.producer.ProduceToAlerter(ctx, alerterEvent)
 			if err != nil {
 				log.Println("Producer error: ", err)
 				return
