@@ -58,7 +58,7 @@ func main() {
 		setter,
 	)
 
-	time.Sleep(30 * time.Second) //fix for demo
+	time.Sleep(10 * time.Second) //fix for demo
 
 	var wg sync.WaitGroup
 	wg.Add(1)
