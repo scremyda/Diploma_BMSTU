@@ -6,8 +6,9 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"sync"
-	"time"
+	"sync/atomic"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 func echoHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,40 +21,61 @@ func echoHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Received: %s", body)
 }
 
-func certificateReloader(certFile, keyFile string) func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	var mu sync.Mutex
-	var currentCert *tls.Certificate
+func main() {
+	certFile := "/app/certs/localhost.crt"
+	keyFile := "/app/certs/localhost.key"
 
-	loadCert := func() error {
+	var atomicHolder atomic.Value
+
+	loadCert := func() {
 		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
-			return err
+			log.Printf("Failed to load cert: %v", err)
+			return
 		}
-		mu.Lock()
-		currentCert = &cert
-		mu.Unlock()
-		log.Println("Certificate reloaded successfully")
-		return nil
+		atomicHolder.Store(&cert)
+		log.Println("Certificate loaded/updated")
 	}
 
-	if err := loadCert(); err != nil {
-		log.Fatalf("Error loading initial certificate: %v", err)
+	loadCert()
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatalf("fsnotify.NewWatcher error: %v", err)
+	}
+	defer watcher.Close()
+
+	for _, f := range []string{certFile, keyFile} {
+		if err := watcher.Add(f); err != nil {
+			log.Fatalf("watcher.Add(%s) error: %v", f, err)
+		}
 	}
 
-	return func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-		mu.Lock()
-		defer mu.Unlock()
-		return currentCert, nil
-	}
-}
+	go func() {
+		for {
+			select {
+			case ev, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if ev.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename) != 0 {
+					loadCert()
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Printf("fsnotify error: %v", err)
+			}
+		}
+	}()
 
-func main() {
-	time.Sleep(60 * time.Second)
-	certFile := "/app/certs/example.com/cert.pem"
-	keyFile := "/app/certs/example.com/key.pem"
-
+	// TLS config that uses GetCertificate to always fetch the latest cert
 	tlsConfig := &tls.Config{
-		GetCertificate: certificateReloader(certFile, keyFile),
+		GetCertificate: func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			certPtr := atomicHolder.Load().(*tls.Certificate)
+			return certPtr, nil
+		},
 	}
 
 	server := &http.Server{
@@ -64,7 +86,8 @@ func main() {
 	http.HandleFunc("/", echoHandler)
 
 	log.Println("Starting echo server at https://localhost:8443")
-	if err := server.ListenAndServeTLS("", ""); err != nil {
+	// Empty strings because certs are provided via GetCertificate
+	if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server error: %v", err)
 	}
 }

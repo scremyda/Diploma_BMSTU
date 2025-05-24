@@ -41,8 +41,8 @@ func (s *Setter) Set(ctx context.Context, domain, cert, key string) error {
 		return fmt.Errorf("failed to create directory %s: %w", settings.Path, err)
 	}
 
-	certFilePath := filepath.Join(settings.Path, "cert.pem")
-	keyFilePath := filepath.Join(settings.Path, "key.pem")
+	certFilePath := filepath.Join(settings.Path, "localhost.crt") //"cert.pem"
+	keyFilePath := filepath.Join(settings.Path, "localhost.key")  //"key.pem"
 
 	// Записываем сертификат в файл.
 	if err := os.WriteFile(certFilePath, []byte(cert), 0644); err != nil {

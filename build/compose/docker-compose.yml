@@ -1,5 +1,6 @@
 services:
   scanner:
+    network_mode: host
     build:
       context: ../../
       dockerfile: ./build/compose/scanner/Dockerfile
@@ -12,6 +13,7 @@ services:
       - ../../scanner/cmd/config.yaml:/app/config.yaml
 
   alerter:
+    network_mode: host
     build:
       context: ../../
       dockerfile: ./build/compose/alerter/Dockerfile
@@ -24,6 +26,7 @@ services:
     restart: always
 
   certer:
+    network_mode: host
     build:
       context: ../../
       dockerfile: ./build/compose/certer/Dockerfile
@@ -32,18 +35,20 @@ services:
     command: [ "/app/certer", "-c", "/app/config.yaml" ]
     volumes:
       - ../../certer/cmd/config.yaml:/app/config.yaml
-      - certs:/app/certs
+      - ./certs:/app/certs
 
   echo:
+    network_mode: host
     build:
       context: ../../
       dockerfile: ./build/compose/echo/Dockerfile
     ports:
       - "8443:8443"
     volumes:
-      - certs:/app/certs
+      - ./certs:/app/certs
 
   postgres:
+    network_mode: host
     image: tembo.docker.scarf.sh/tembo/pg17-pgmq:latest
     environment:
       POSTGRES_USER: postgres

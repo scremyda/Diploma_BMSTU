@@ -25,7 +25,7 @@ func NewAnalyzer(cfg Conf) *Analyzer {
 
 func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 	if scrape.ExpiresIn < a.conf.AlertInterval {
-		return fmt.Errorf("certificate for %s expires in %s (alert threshold: %s)",
+		return fmt.Errorf("сертификат для %s истекает через %s (интервал оповещения: %s)",
 			scrape.Target, scrape.ExpiresIn, a.conf.AlertInterval)
 	}
 
@@ -41,7 +41,13 @@ func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 	}
 
 	if !matchesDomain(expectedPattern, host) && !contains(scrape.SANs, host) {
-		return fmt.Errorf("certificate for %s has unexpected CN: got %s, expected %s", scrape.Target, scrape.CN, host)
+		return fmt.Errorf(
+			"сертификат для %s имеет неверный CN: получили %s, ожидаем %s (интервал оповещения: %s)",
+			scrape.Target,
+			scrape.CN,
+			host,
+			a.conf.AlertInterval,
+		)
 	}
 
 	return nil

@@ -12,6 +12,12 @@ consumer:
 producer:
   queue_name: "alerter_queue"
 
+### Команда создать серты для кофига certer
+#  openssl req -x509 -nodes -newkey rsa:2048 \
+#  -keyout 127.0.0.1.key -out 127.0.0.1.crt \
+#  -days 365 -subj "/CN=127.0.0.1" \
+#  -addext "subjectAltName = IP:127.0.0.1"
+
 certer:
   certificates:
     expired.badssl.com:

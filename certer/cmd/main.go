@@ -14,8 +14,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"time"
 )
 
 func main() {
@@ -58,6 +57,8 @@ func main() {
 		certer,
 		setter,
 	)
+
+	time.Sleep(30 * time.Second) //fix for demo
 
 	var wg sync.WaitGroup
 	wg.Add(1)

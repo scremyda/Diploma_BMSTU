@@ -98,7 +98,7 @@ func (s *Scheduler) manage(ctx context.Context) error {
 
 			event := models.AlerterEvent{
 				Target:  event.Target,
-				Message: fmt.Sprintf("successfully set certs for %s", u.Scheme),
+				Message: fmt.Sprintf("Сертификат для %s обновлен.", u.Scheme),
 			}
 
 			err = s.producer.Produce(ctx, event)

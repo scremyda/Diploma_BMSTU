@@ -55,7 +55,7 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 			}
 
 			for _, alerterEvent := range alerterEvents {
-				text := fmt.Sprintf("Error for alerter event %s: %s", alerterEvent.Target, alerterEvent.Message)
+				text := fmt.Sprintf("Сообщение alerter %s: %s", alerterEvent.Target, alerterEvent.Message)
 				if err := tb.SendMessage(text); err != nil {
 					log.Printf("Error sending message to Telegram: %v", err)
 				} else {
@@ -72,7 +72,7 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 			}
 
 			for _, certerEvent := range certerEvents {
-				text := fmt.Sprintf("Error for certer event %s: %s", certerEvent.Target)
+				text := fmt.Sprintf("Сообщение certer: %s", certerEvent.Target)
 				if err := tb.SendMessage(text); err != nil {
 					log.Printf("Error sending message to Telegram: %v", err)
 				} else {
