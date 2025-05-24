@@ -2,10 +2,12 @@ package analyzer
 
 import (
 	"context"
-	"diploma/scanner/scraper"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
+
+	"diploma/scanner/scraper"
 )
 
 type Conf struct {
@@ -18,39 +20,49 @@ type Analyzer struct {
 }
 
 func NewAnalyzer(cfg Conf) *Analyzer {
-	return &Analyzer{
-		conf: cfg,
-	}
+	return &Analyzer{conf: cfg}
 }
 
 func (a *Analyzer) Analyze(ctx context.Context, scrape scraper.Scrape) error {
 	if scrape.ExpiresIn < a.conf.AlertInterval {
-		return fmt.Errorf("сертификат для %s истекает через %s (интервал оповещения: %s)",
-			scrape.Target, scrape.ExpiresIn, a.conf.AlertInterval)
+		reason := fmt.Sprintf("сертификат истекает через %s", scrape.ExpiresIn)
+		msg := formatAnalysisError(scrape, "Просрочка", reason)
+		return errors.New(msg)
 	}
 
 	parsedURL, err := url.Parse(scrape.Target)
 	if err != nil {
-		return fmt.Errorf("invalid URL %s: %v", scrape.Target, err)
+		reason := "invalid URL"
+		detail := err.Error()
+		msg := formatAnalysisError(scrape, reason, detail)
+		return errors.New(msg)
 	}
 	host := parsedURL.Scheme
 
-	expectedPattern := a.conf.OverrideCN
-	if expectedPattern == "" {
-		expectedPattern = scrape.CN
+	expected := a.conf.OverrideCN
+	if expected == "" {
+		expected = scrape.CN
 	}
-
-	if !matchesDomain(expectedPattern, host) && !contains(scrape.SANs, host) {
-		return fmt.Errorf(
-			"сертификат для %s имеет неверный CN: получили %s, ожидаем %s (интервал оповещения: %s)",
-			scrape.Target,
-			scrape.CN,
-			host,
-			a.conf.AlertInterval,
-		)
+	if !matchesDomain(expected, host) && !contains(scrape.SANs, host) {
+		reason := "неверный CN/SAN"
+		detail := fmt.Sprintf("получили %q, ожидаем %q", scrape.CN, host)
+		msg := formatAnalysisError(scrape, reason, detail)
+		return errors.New(msg)
 	}
 
 	return nil
+}
+
+func formatAnalysisError(scrape scraper.Scrape, reason, detail string) string {
+	return fmt.Sprintf(
+		"⚠️ Проблема с сертификатом! ⚠️\n\n"+
+			"• Домен: `%s`\n"+
+			"• Причина: %s\n"+
+			"• Детали: %s\n",
+		scrape.Target,
+		reason,
+		detail,
+	)
 }
 
 func matchesDomain(pattern, host string) bool {

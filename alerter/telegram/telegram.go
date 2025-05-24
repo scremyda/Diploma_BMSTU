@@ -55,7 +55,7 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 			}
 
 			for _, alerterEvent := range alerterEvents {
-				text := fmt.Sprintf("Сообщение alerter %s: %s", alerterEvent.Target, alerterEvent.Message)
+				text := fmt.Sprintf("Сообщение alerter для %s\n\n%s", alerterEvent.Target, alerterEvent.Message)
 				if err := tb.SendMessage(text); err != nil {
 					log.Printf("Error sending message to Telegram: %v", err)
 				} else {
@@ -63,22 +63,22 @@ func (tb *TelegramBot) ProcessMessages(ctx context.Context) {
 				}
 			}
 
-			certerEvents, err := tb.consumer.GetCerterEvents(ctx)
-			if err != nil {
-				if !errors.Is(err, consumer.ErrFinishBatch) {
-					log.Printf("Error getting certer events: %v", err)
-					continue
-				}
-			}
-
-			for _, certerEvent := range certerEvents {
-				text := fmt.Sprintf("Сообщение certer: %s", certerEvent.Target)
-				if err := tb.SendMessage(text); err != nil {
-					log.Printf("Error sending message to Telegram: %v", err)
-				} else {
-					log.Printf("Message certer sent: %s", text)
-				}
-			}
+			//certerEvents, err := tb.consumer.GetCerterEvents(ctx)
+			//if err != nil {
+			//	if !errors.Is(err, consumer.ErrFinishBatch) {
+			//		log.Printf("Error getting certer events: %v", err)
+			//		continue
+			//	}
+			//}
+			//
+			//for _, certerEvent := range certerEvents {
+			//	text := fmt.Sprintf("Сообщение certer: %s", certerEvent.Target)
+			//	if err := tb.SendMessage(text); err != nil {
+			//		log.Printf("Error sending message to Telegram: %v", err)
+			//	} else {
+			//		log.Printf("Message certer sent: %s", text)
+			//	}
+			//}
 		}
 	}
 }

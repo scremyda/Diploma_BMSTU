@@ -11,7 +11,7 @@ import (
 )
 
 type Interface interface {
-	GetEvents(ctx context.Context) ([]models.CerterEvent, error)
+	GetCerterEvents(ctx context.Context) ([]models.CerterEvent, error)
 }
 
 type Config struct {
@@ -31,7 +31,7 @@ func New(db *pgxpool.Pool, conf Config) *Consumer {
 	}
 }
 
-func (c *Consumer) GetEvents(ctx context.Context) ([]models.CerterEvent, error) {
+func (c *Consumer) GetCerterEvents(ctx context.Context) ([]models.CerterEvent, error) {
 	tx, err := c.db.Begin(ctx)
 	if err != nil {
 		log.Printf("Error starting transaction: %v", err)
